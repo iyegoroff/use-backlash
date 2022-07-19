@@ -27,7 +27,7 @@ export function useBacklash<
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
   ActionMap extends {
     readonly [Key in keyof UpdateMap]: Parameters<UpdateMap[Key]> extends [unknown, ...infer Rest]
-      ? (...args: Rest) => undefined
+      ? (...args: Rest) => void
       : never
   }
 >(
@@ -44,7 +44,7 @@ export function useBacklash<
     State,
     ...((
       deps: Deps,
-      actions: Readonly<Record<string, (...args: readonly never[]) => undefined>>
+      actions: Readonly<Record<string, (...args: readonly never[]) => void>>
     ) => void)[]
   ],
   UpdateMap extends Readonly<
@@ -57,7 +57,7 @@ export function useBacklash<
         State,
         ...((
           deps: Deps,
-          actions: Readonly<Record<string, (...actionArgs: readonly never[]) => undefined>>
+          actions: Readonly<Record<string, (...actionArgs: readonly never[]) => void>>
         ) => void)[]
       ]
     >
@@ -71,7 +71,7 @@ export function useBacklash<
   dependencies: Deps
 ): readonly [
   PrettyDeepReadonly<State>,
-  Readonly<Record<string, (...args: readonly never[]) => undefined>>
+  Readonly<Record<string, (...args: readonly never[]) => void>>
 ] {
   const [[initialState, ...initialEffects]] = useState(() => init(initial))
   const [state, setState] = useState(initialState)
@@ -93,8 +93,6 @@ export function useBacklash<
               effects.current.shift()?.(dependencies, actions)
             }
           }
-
-          return undefined
         }
       ])
     )
@@ -115,7 +113,7 @@ type ActionMap<Action extends readonly [string, ...unknown[]]> = PrettyType<
   UnionToIntersection<
     Action extends readonly [infer ActionTag, ...infer ActionParams]
       ? ActionTag extends string
-        ? Readonly<Record<ActionTag, (...args: ActionParams) => undefined>>
+        ? Readonly<Record<ActionTag, (...args: ActionParams) => void>>
         : never
       : never
   >
