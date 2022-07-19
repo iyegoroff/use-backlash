@@ -62,8 +62,8 @@ export function useBacklash<
       ]
     >
   >,
-  Deps extends Readonly<Record<string, unknown>>,
-  State extends Parameters<UpdateMap[keyof UpdateMap]>[0]
+  State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
+  Deps extends Readonly<Record<string, unknown>>
 >(
   initial: Parameters<Init>[0],
   init: Init,
@@ -75,6 +75,7 @@ export function useBacklash<
 ] {
   const [[initialState, ...initialEffects]] = useState(() => init(initial))
   const [state, setState] = useState(initialState)
+  const mutState = useRef(state)
   const isRunning = useRef(true)
   const effects = useRef(initialEffects)
 
@@ -84,7 +85,8 @@ export function useBacklash<
         tag,
         (...args: readonly never[]) => {
           if (isRunning.current) {
-            const [nextState, ...nextEffects] = up(state, ...args)
+            const [nextState, ...nextEffects] = up(mutState.current, ...args)
+            mutState.current = nextState
             setState(nextState)
             effects.current.unshift(...nextEffects)
             while (effects.current.length > 0) {
@@ -98,10 +100,13 @@ export function useBacklash<
     )
   )
 
-  useEffect(() => {
-    isRunning.current = false
-    effects.current = []
-  }, [])
+  useEffect(
+    () => () => {
+      isRunning.current = false
+      effects.current = []
+    },
+    []
+  )
 
   return [state, actions]
 }
@@ -122,20 +127,20 @@ type Effect<
 > = (deps: Deps, actions: ActionMap<Action>) => void
 
 export type Command<
-  Action extends readonly [string, ...unknown[]],
   State,
+  Action extends readonly [string, ...unknown[]],
   Deps extends Readonly<Record<string, unknown>>
 > = readonly [State, ...(readonly Effect<Action, Deps>[])]
 
 export type Update<
-  Action extends readonly [string, ...unknown[]],
   State,
+  Action extends readonly [string, ...unknown[]],
   Deps extends Readonly<Record<string, unknown>>
-> = UpdateMapImpl<Action, DeepReadonly<State>, Deps, Action>
+> = UpdateMapImpl<DeepReadonly<State>, Action, Deps, Action>
 
 type UpdateMapImpl<
-  Action extends readonly [string, ...unknown[]],
   State,
+  Action extends readonly [string, ...unknown[]],
   Deps extends Readonly<Record<string, unknown>>,
   CombinedAction extends Action
 > = PrettyType<
@@ -143,46 +148,9 @@ type UpdateMapImpl<
     Action extends readonly [infer Tag, ...infer Params]
       ? Tag extends string
         ? Readonly<
-            Record<Tag, (state: State, ...args: Params) => Command<CombinedAction, State, Deps>>
+            Record<Tag, (state: State, ...args: Params) => Command<State, CombinedAction, Deps>>
           >
         : never
       : never
   >
 >
-
-// type Action = [tag: 'inc'] | [tag: 'dec'] | [tag: 'add', value: number]
-// type State = { count: number; foo?: { x: 1 } } | { loading: true }
-// type Deps = { storage: Storage }
-
-// const init = (count: number) => [{ count }] as const
-
-// const update = {
-//   inc: (state: State) => ['loading' in state ? state : { count: state.count + 1 }] as const,
-//   dec: (state: State) => ['loading' in state ? state : { count: state.count - 1 }] as const,
-//   add: (state: State, value: number) =>
-//     'loading' in state
-//       ? ([state] as const)
-//       : ([
-//           { count: state.count + value },
-//           ({ storage }: Deps) => {
-//             storage.setItem('key', `${state.count + value}`)
-//           }
-//         ] as const)
-// }
-
-// const update2: Update<State, Action, Deps> = {
-//   inc: (state) => ['loading' in state ? state : { count: state.count + 1 }],
-//   dec: (state) => ['loading' in state ? state : { count: state.count - 1 }],
-//   add: (state, value) =>
-//     'loading' in state
-//       ? [state]
-//       : [
-//           { count: state.count + value },
-//           ({ storage }) => {
-//             storage.setItem('key', `${state.count + value}`)
-//           }
-//         ]
-// }
-
-// const s1 = useBacklash(5, init, update, { storage: localStorage })
-// const s2 = useBacklash(5, init, update2, { storage: localStorage })
