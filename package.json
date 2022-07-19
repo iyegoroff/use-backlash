@@ -1,0 +1,92 @@
+{
+  "name": "use-backlash",
+  "version": "0.0.0",
+  "description": "React hook enhancing useReducer with effects",
+  "sideEffects": false,
+  "types": "./dist/dts/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/mjs/index.js",
+  "react-native": "./dist/mjs/index.js",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/mjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "type": "module",
+  "scripts": {
+    "preversion": "npm run lint -- --fix && npm run build && npm run typecheck-test && npm t && npm run type-coverage && npm run typedoc",
+    "postversion": "git add . && git commit -am \"lint & docs [skip build]\" || : && git push && git push --tags",
+    "build:ts": "tsc -p configs/tsconfig.cjs.json && tsc -p configs/tsconfig.mjs.json && tsc -p configs/tsconfig.dts.json",
+    "build": "rm -rf dist && npm run build:ts && echo '{ \"type\": \"commonjs\" }' >> dist/cjs/package.json",
+    "lint": "eslint .",
+    "test": "jest",
+    "typedoc": "typedoc src/index.ts && touch docs/.nojekyll",
+    "typecheck-test": "tsc test/index.spec.ts --noEmit",
+    "coverage": "codecov",
+    "type-coverage": "type-coverage --detail --strict --ignore-files **/dist/**"
+  },
+  "keywords": [
+    "react",
+    "hook",
+    "reducer",
+    "effect",
+    "useReducer",
+    "useEffect"
+  ],
+  "files": [
+    "dist",
+    "src",
+    "test"
+  ],
+  "author": "iyegoroff <iegoroff@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/iyegoroff/use-backlash/issues"
+  },
+  "homepage": "https://github.com/iyegoroff/use-backlash#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iyegoroff/use-backlash.git"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.18.6",
+    "@babel/preset-typescript": "^7.18.6",
+    "@types/jest": "^28.1.5",
+    "@types/react": "^18.0.15",
+    "@types/node": "^18.0.4",
+    "@typescript-eslint/eslint-plugin": "^5.30.6",
+    "@typescript-eslint/parser": "^5.30.6",
+    "eslint": "^8.19.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-standard-with-typescript": "^22.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-no-null": "^1.0.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-promise": "^6.0.0",
+    "jest": "^28.1.3",
+    "prettier": "^2.7.1",
+    "react": "^18.2.0",
+    "type-coverage": "^2.22.0",
+    "typedoc": "^0.23.7",
+    "typescript": "^4.7.4"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "ts"
+    ],
+    "testRegex": ".spec.ts$",
+    "coverageDirectory": "coverage",
+    "collectCoverage": true,
+    "testEnvironment": "node"
+  },
+  "typeCoverage": {
+    "atLeast": 100
+  }
+}

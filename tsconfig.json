@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "ES2018",
+    "lib": ["ES2019.Object", "es2018"],
+    "strict": true,
+    "moduleResolution": "node",
+    "removeComments": true,
+    "noEmitOnError": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "allowUnreachableCode": false,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["jest", "node"]
+  }
+}
