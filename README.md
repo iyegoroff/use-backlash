@@ -9,7 +9,7 @@
 [![Bundlephobia](https://img.shields.io/bundlephobia/minzip/use-backlash?label=min+gzip)](https://bundlephobia.com/package/use-backlash)
 [![npm](https://img.shields.io/npm/l/use-backlash.svg?t=1495378566926)](https://www.npmjs.com/package/use-backlash)
 
-React hook enhancing useReducer with effects
+useReducer with effects, the elmish way
 
 ## Getting started
 
@@ -19,6 +19,4 @@ npm i use-backlash
 
 ## Description
 
-
 ## Example
-

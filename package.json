@@ -1,7 +1,7 @@
 {
   "name": "use-backlash",
   "version": "0.0.3",
-  "description": "React hook enhancing useReducer with effects",
+  "description": "useReducer with effects, the elmish way",
   "sideEffects": false,
   "types": "./dist/dts/index.d.ts",
   "main": "./dist/cjs/index.js",
@@ -32,7 +32,8 @@
     "reducer",
     "effect",
     "useReducer",
-    "useEffect"
+    "useEffect",
+    "elmish"
   ],
   "files": [
     "dist",
