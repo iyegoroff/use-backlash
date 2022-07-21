@@ -23,7 +23,7 @@
     "lint": "eslint .",
     "test": "jest",
     "typedoc": "typedoc src/index.ts && touch docs/.nojekyll",
-    "typecheck-test": "tsc test/index.spec.ts --noEmit",
+    "typecheck-test": "tsc test/index.spec.tsx --noEmit",
     "coverage": "codecov",
     "type-coverage": "type-coverage --detail --strict --ignore-files **/dist/**"
   },
