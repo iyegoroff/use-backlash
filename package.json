@@ -16,13 +16,12 @@
   },
   "type": "module",
   "scripts": {
-    "preversion": "npm run lint -- --fix && npm run build && npm run typecheck-test && npm t && npm run type-coverage && npm run typedoc",
+    "preversion": "npm run lint -- --fix && npm run build && npm run typecheck-test && npm t && npm run type-coverage",
     "postversion": "git add . && git commit -am \"lint & docs [skip build]\" || : && git push && git push --tags",
     "build:ts": "tsc -p configs/tsconfig.cjs.json && tsc -p configs/tsconfig.mjs.json && tsc -p configs/tsconfig.dts.json",
     "build": "rm -rf dist && npm run build:ts && echo '{ \"type\": \"commonjs\" }' >> dist/cjs/package.json",
     "lint": "eslint .",
     "test": "jest",
-    "typedoc": "typedoc src/index.ts && touch docs/.nojekyll",
     "typecheck-test": "tsc test/index.spec.tsx --noEmit --jsx react --esModuleInterop true",
     "coverage": "codecov",
     "type-coverage": "type-coverage --detail --strict --ignore-files **/examples/** --ignore-files **/dist/**"
@@ -73,7 +72,6 @@
     "prettier": "^2.7.1",
     "react": "^18.2.0",
     "type-coverage": "^2.22.0",
-    "typedoc": "^0.23.7",
     "typescript": "^4.7.4"
   },
   "peerDependencies": {
