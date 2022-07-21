@@ -25,7 +25,7 @@
     "typedoc": "typedoc src/index.ts && touch docs/.nojekyll",
     "typecheck-test": "tsc test/index.spec.tsx --noEmit --jsx react --esModuleInterop true",
     "coverage": "codecov",
-    "type-coverage": "type-coverage --detail --strict --ignore-files **/dist/**"
+    "type-coverage": "type-coverage --detail --strict --ignore-files **/examples/** --ignore-files **/dist/**"
   },
   "keywords": [
     "react",
