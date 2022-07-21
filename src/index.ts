@@ -98,13 +98,16 @@ export function useBacklash<
     )
   )
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    while (effects.current.length > 0) {
+      effects.current.shift()?.(dependencies, actions)
+    }
+
+    return () => {
       isRunning.current = false
       effects.current = []
-    },
-    []
-  )
+    }
+  }, [])
 
   return [state, actions]
 }

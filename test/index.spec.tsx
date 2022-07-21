@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react'
-import { render, cleanup, waitFor } from '@testing-library/react'
-import { Update, useBacklash } from '../src'
+import React, { useEffect, useState, useLayoutEffect, useCallback, StrictMode } from 'react'
+import { render, cleanup, waitFor, fireEvent } from '@testing-library/react'
+import { Command, Update, useBacklash } from '../src'
 
 describe('useBacklash', () => {
   afterEach(cleanup)
 
-  test('basic', () => {
+  test('should rerender less times than the amount of action calls', () => {
     let renders = 0
     const states: number[] = []
 
@@ -45,7 +45,7 @@ describe('useBacklash', () => {
     expect(renders).toBeLessThan(states.length)
   })
 
-  test('effect order', () => {
+  test('should preserve effect order', () => {
     type State = readonly number[]
     type Action = [tag: 'push', value: number]
     type Deps = Record<string, never>
@@ -79,7 +79,7 @@ describe('useBacklash', () => {
     expect(getByTestId('result').textContent).toEqual('10,20,21,22,30')
   })
 
-  test('async', async () => {
+  test('should handle async effects', async () => {
     type State = 'idle' | 'loading' | { text: string }
     type Action = [tag: 'start'] | [tag: 'done', text: string]
     type Deps = { fetch: () => Promise<string> }
@@ -111,5 +111,192 @@ describe('useBacklash', () => {
     await waitFor(() => {
       expect(getByTestId('result').textContent).toEqual('{"text":"some text"}')
     })
+  })
+
+  test('should cleanup on unmount', async () => {
+    type State = number
+    type Action = [tag: 'inc']
+    type Deps = { delay: () => Promise<unknown> }
+
+    const init = () => [0] as const
+    const update: Update<State, Action, Deps> = {
+      inc: (state) => [state + 1, ({ delay }, { inc }) => delay().then(inc)]
+    }
+
+    const delay = () =>
+      new Promise((resolve) => {
+        setTimeout(resolve, 100)
+      })
+
+    const Counter = () => {
+      const [state, actions] = useBacklash(undefined, init, update, { delay })
+
+      useEffect(() => {
+        actions.inc()
+      }, [actions])
+
+      return <div data-testid='result'>{state}</div>
+    }
+
+    const App = () => {
+      const [stepOne, setStepOne] = useState(false)
+      const [stepTwo, setStepTwo] = useState(false)
+
+      useEffect(() => {
+        setTimeout(() => setStepOne(true), 350)
+        setTimeout(() => setStepTwo(true), 650)
+      }, [])
+
+      return stepTwo ? (
+        <div data-testid='two'>two</div>
+      ) : stepOne ? (
+        <div data-testid='one'>one</div>
+      ) : (
+        <Counter />
+      )
+    }
+
+    const { getByTestId } = render(<App />)
+
+    const result = getByTestId('result')
+
+    await waitFor(() => {
+      expect(result.textContent).toEqual('4')
+      expect(getByTestId('two').textContent).toEqual('two')
+    })
+  })
+
+  test('should trigger initial effects', () => {
+    type State = number
+    type Action = [tag: 'inc']
+    type Deps = Record<string, never>
+
+    const init = (): Command<State, Action, Deps> => [
+      0,
+      (_, { inc }) => inc(),
+      (_, { inc }) => inc(),
+      (_, { inc }) => inc()
+    ]
+
+    const update: Update<State, Action, Deps> = {
+      inc: (state) => [state + 1]
+    }
+
+    const Counter = () => {
+      const [state] = useBacklash(undefined, init, update, {})
+
+      return <div data-testid='result'>{state}</div>
+    }
+
+    const { getByTestId } = render(<Counter />)
+    expect(getByTestId('result').textContent).toEqual('3')
+  })
+
+  test('should pass initial argument', () => {
+    type State = number
+    type Action = [tag: 'inc']
+    type Deps = Record<string, never>
+
+    const init = (count: number): Command<State, Action, Deps> => [count]
+
+    const update: Update<State, Action, Deps> = {
+      inc: (state) => [state + 1]
+    }
+
+    const Counter = () => {
+      const [state] = useBacklash(10, init, update, {})
+
+      return <div data-testid='result'>{state}</div>
+    }
+
+    const { getByTestId } = render(<Counter />)
+    expect(getByTestId('result').textContent).toEqual('10')
+  })
+
+  test('should queue effects during commit phase', () => {
+    let effectCount = 0
+
+    type State = number
+    type Action = [tag: 'inc']
+    type Deps = Record<string, never>
+
+    const init = () => [0] as const
+    const update: Update<State, Action, Deps> = {
+      inc: (state) => [
+        state + 1,
+        () => {
+          effectCount++
+        }
+      ]
+    }
+
+    const Counter = () => {
+      const [hasClicked, setHasClicked] = useState(false)
+      const [state, actions] = useBacklash(undefined, init, update, {})
+
+      useLayoutEffect(() => {
+        if (hasClicked) {
+          actions.inc()
+        }
+      }, [hasClicked, actions])
+
+      const handleClick = useCallback(() => {
+        setHasClicked(true)
+        actions.inc()
+      }, [actions])
+
+      return (
+        <>
+          <div data-testid='result'>{state}</div>
+          <button data-testid='button' onClick={handleClick} />
+        </>
+      )
+    }
+
+    const { getByTestId } = render(<Counter />)
+
+    expect(getByTestId('result').textContent).toEqual('0')
+
+    const button = getByTestId('button')
+
+    fireEvent.click(button)
+
+    expect(getByTestId('result').textContent).toEqual('2')
+    expect(effectCount).toEqual(2)
+  })
+
+  test('should take account of StrictMode', () => {
+    type State = number
+    type Action = [tag: 'inc']
+    type Deps = Record<string, never>
+
+    const init = (count: number): Command<State, Action, Deps> => [count, (_, { inc }) => inc()]
+
+    const update: Update<State, Action, Deps> = {
+      inc: (state) => [state + 1]
+    }
+
+    const Counter = () => {
+      const [state, actions] = useBacklash(1, init, update, {})
+
+      useEffect(() => {
+        actions.inc()
+      }, [actions])
+
+      useLayoutEffect(() => {
+        actions.inc()
+      }, [actions])
+
+      return <div data-testid='result'>{state}</div>
+    }
+
+    const App = () => (
+      <StrictMode>
+        <Counter />
+      </StrictMode>
+    )
+
+    const { getByTestId } = render(<App />)
+    expect(getByTestId('result').textContent).toEqual('4')
   })
 })
