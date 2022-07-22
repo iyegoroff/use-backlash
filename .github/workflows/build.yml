@@ -8,6 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: npm ci
+      - run: cd examples/my-app && npm ci
       - run: npm run lint
       - run: npm run build
       - run: npm t
