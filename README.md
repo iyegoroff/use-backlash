@@ -19,4 +19,10 @@ npm i use-backlash
 
 ## Description
 
+This hook is a basic approach to split view/logic/effects in React. It was developed as a boilerplate-free substitute of [ts-elmish](https://github.com/iyegoroff/ts-elmish) project. While it doesn't support effect composition or complex effect creators, it is easier to grasp and have enough power to handle all of the UI-logic for a single component. It also works in [StrictMode](https://reactjs.org/docs/strict-mode.html) and is easy to [test](test/index.spec.tsx#L303-L330)
+
 ## Example
+
+```ts
+
+```

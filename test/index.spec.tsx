@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useLayoutEffect, useCallback, StrictMode } from 'react'
-import { render, cleanup, waitFor, fireEvent } from '@testing-library/react'
+import { render, cleanup, waitFor, fireEvent, renderHook, act } from '@testing-library/react'
 import { Command, Update, useBacklash } from '../src'
 
 describe('useBacklash', () => {
@@ -298,5 +298,82 @@ describe('useBacklash', () => {
 
     const { getByTestId } = render(<App />)
     expect(getByTestId('result').textContent).toEqual('4')
+  })
+
+  test('should not rerender when setting same state', async () => {
+    let renders = 0
+
+    type State = number[]
+    type Action = [tag: 'clear']
+    type Deps = Record<string, never>
+
+    const init = () => [[1, 2, 3]] as const
+    const update: Update<State, Action, Deps> = {
+      clear: (state) => [state.length === 0 ? state : []]
+    }
+
+    const Counter = () => {
+      const [state, actions] = useBacklash(undefined, init, update, {})
+
+      renders++
+
+      return (
+        <div>
+          <button data-testid='button' onClick={actions.clear} />
+          <div data-testid='result'>{state}</div>
+        </div>
+      )
+    }
+
+    const { getByTestId } = render(<Counter />)
+
+    const button = getByTestId('button')
+
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        fireEvent.click(button)
+        resolve(undefined)
+      }, 100)
+    })
+
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        fireEvent.click(button)
+        resolve(undefined)
+      }, 300)
+    })
+
+    await waitFor(() => {
+      expect(renders).toBeLessThan(3)
+    })
+  })
+
+  test('should not be affected by initial value change', () => {
+    type State = number
+    type Action = [tag: 'inc']
+    type Deps = Record<string, never>
+
+    const init = (count: number): Command<State, Action, Deps> => [count, (_, { inc }) => inc()]
+
+    const update: Update<State, Action, Deps> = {
+      inc: (state) => [state + 1]
+    }
+
+    let initial = 5
+
+    const { result, rerender } = renderHook(() => useBacklash(initial, init, update, {}))
+
+    expect(result.current[0]).toEqual(6)
+
+    act(() => {
+      result.current[1].inc()
+    })
+
+    expect(result.current[0]).toEqual(7)
+
+    initial = 10
+    rerender()
+
+    expect(result.current[0]).toEqual(7)
   })
 })

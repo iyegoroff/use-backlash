@@ -86,8 +86,10 @@ export function useBacklash<
         (...args: readonly never[]) => {
           if (isRunning.current) {
             const [nextState, ...nextEffects] = up(mutState.current, ...args)
-            mutState.current = nextState
-            setState(nextState)
+            if (nextState !== mutState.current) {
+              mutState.current = nextState
+              setState(nextState)
+            }
             effects.current.unshift(...nextEffects)
             while (effects.current.length > 0) {
               effects.current.shift()?.(dependencies, actions)

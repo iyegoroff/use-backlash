@@ -1,0 +1,25 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "description": "",
+  "private": "true",
+  "source": "src/index.html",
+  "scripts": {
+    "preinstall": "cd ../.. && npm i",
+    "start": "parcel",
+    "build": "parcel build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/react": "^18.0.15",
+    "@types/react-dom": "^18.0.6",
+    "parcel": "^2.6.2",
+    "process": "^0.11.10"
+  },
+  "dependencies": {
+    "ts-is-record": "^3.0.5",
+    "use-backlash": "file:../../"
+  }
+}

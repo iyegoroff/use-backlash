@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-undef
-module.exports = {
+export default {
   coverageDirectory: 'coverage',
   collectCoverage: true,
   testEnvironment: 'jsdom',
