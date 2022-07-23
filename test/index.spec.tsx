@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useLayoutEffect, useCallback, StrictMode } from 'react'
 import { render, cleanup, waitFor, fireEvent, renderHook, act } from '@testing-library/react'
-import { Command, Update, useBacklash } from '../src'
+import { Command, UpdateMap, useBacklash } from '../src'
 
 describe('useBacklash', () => {
   afterEach(cleanup)
@@ -14,7 +14,7 @@ describe('useBacklash', () => {
     type Deps = Record<string, never>
 
     const init = () => [0] as const
-    const update: Update<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Deps> = {
       inc: (state) => [
         state + 1,
         () => {
@@ -24,7 +24,7 @@ describe('useBacklash', () => {
     }
 
     const Counter = () => {
-      const [state, actions] = useBacklash(undefined, init, update, {})
+      const [state, actions] = useBacklash(init, update, {})
 
       useEffect(() => {
         actions.inc()
@@ -51,7 +51,7 @@ describe('useBacklash', () => {
     type Deps = Record<string, never>
 
     const init = () => [[]] as const
-    const update: Update<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Deps> = {
       push: (state, value) => [
         [...state, value],
         (_, { push }) => {
@@ -64,7 +64,7 @@ describe('useBacklash', () => {
     }
 
     const List = () => {
-      const [state, actions] = useBacklash(undefined, init, update, {})
+      const [state, actions] = useBacklash(init, update, {})
 
       useEffect(() => {
         actions.push(10)
@@ -85,7 +85,7 @@ describe('useBacklash', () => {
     type Deps = { fetch: () => Promise<string> }
 
     const init = () => ['idle'] as const
-    const update: Update<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Deps> = {
       start: () => ['loading', ({ fetch }, { done }) => fetch().then(done)],
 
       done: (_, text) => [{ text }]
@@ -97,7 +97,7 @@ describe('useBacklash', () => {
       })
 
     const Async = () => {
-      const [state, actions] = useBacklash(undefined, init, update, { fetch })
+      const [state, actions] = useBacklash(init, update, { fetch })
 
       useEffect(() => {
         actions.start()
@@ -119,7 +119,7 @@ describe('useBacklash', () => {
     type Deps = { delay: () => Promise<unknown> }
 
     const init = () => [0] as const
-    const update: Update<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Deps> = {
       inc: (state) => [state + 1, ({ delay }, { inc }) => delay().then(inc)]
     }
 
@@ -129,7 +129,7 @@ describe('useBacklash', () => {
       })
 
     const Counter = () => {
-      const [state, actions] = useBacklash(undefined, init, update, { delay })
+      const [state, actions] = useBacklash(init, update, { delay })
 
       useEffect(() => {
         actions.inc()
@@ -178,39 +178,18 @@ describe('useBacklash', () => {
       (_, { inc }) => inc()
     ]
 
-    const update: Update<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Deps> = {
       inc: (state) => [state + 1]
     }
 
     const Counter = () => {
-      const [state] = useBacklash(undefined, init, update, {})
+      const [state] = useBacklash(init, update, {})
 
       return <div data-testid='result'>{state}</div>
     }
 
     const { getByTestId } = render(<Counter />)
     expect(getByTestId('result').textContent).toEqual('3')
-  })
-
-  test('should pass initial argument', () => {
-    type State = number
-    type Action = [tag: 'inc']
-    type Deps = Record<string, never>
-
-    const init = (count: number): Command<State, Action, Deps> => [count]
-
-    const update: Update<State, Action, Deps> = {
-      inc: (state) => [state + 1]
-    }
-
-    const Counter = () => {
-      const [state] = useBacklash(10, init, update, {})
-
-      return <div data-testid='result'>{state}</div>
-    }
-
-    const { getByTestId } = render(<Counter />)
-    expect(getByTestId('result').textContent).toEqual('10')
   })
 
   test('should queue effects during commit phase', () => {
@@ -221,7 +200,7 @@ describe('useBacklash', () => {
     type Deps = Record<string, never>
 
     const init = () => [0] as const
-    const update: Update<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Deps> = {
       inc: (state) => [
         state + 1,
         () => {
@@ -232,7 +211,7 @@ describe('useBacklash', () => {
 
     const Counter = () => {
       const [hasClicked, setHasClicked] = useState(false)
-      const [state, actions] = useBacklash(undefined, init, update, {})
+      const [state, actions] = useBacklash(init, update, {})
 
       useLayoutEffect(() => {
         if (hasClicked) {
@@ -267,24 +246,30 @@ describe('useBacklash', () => {
 
   test('should take account of StrictMode', () => {
     type State = number
-    type Action = [tag: 'inc']
+    type Action = [tag: 'inc', source: string]
     type Deps = Record<string, never>
 
-    const init = (count: number): Command<State, Action, Deps> => [count, (_, { inc }) => inc()]
+    const init = (count: number): Command<State, Action, Deps> => [
+      count,
+      (_, { inc }) => inc('init')
+    ]
 
-    const update: Update<State, Action, Deps> = {
-      inc: (state) => [state + 1]
+    const update: UpdateMap<State, Action, Deps> = {
+      inc: (state, source) => {
+        console.log(source, state + 1)
+        return [state + 1]
+      }
     }
 
     const Counter = () => {
-      const [state, actions] = useBacklash(1, init, update, {})
+      const [state, actions] = useBacklash(() => init(1), update, {})
 
       useEffect(() => {
-        actions.inc()
+        actions.inc('useEffect')
       }, [actions])
 
       useLayoutEffect(() => {
-        actions.inc()
+        actions.inc('useLayoutEffect')
       }, [actions])
 
       return <div data-testid='result'>{state}</div>
@@ -308,12 +293,12 @@ describe('useBacklash', () => {
     type Deps = Record<string, never>
 
     const init = () => [[1, 2, 3]] as const
-    const update: Update<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Deps> = {
       clear: (state) => [state.length === 0 ? state : []]
     }
 
     const Counter = () => {
-      const [state, actions] = useBacklash(undefined, init, update, {})
+      const [state, actions] = useBacklash(init, update, {})
 
       renders++
 
@@ -348,32 +333,107 @@ describe('useBacklash', () => {
     })
   })
 
-  test('should not be affected by initial value change', () => {
+  test('should call init only once', async () => {
+    let renders = 0
+    let initCreatorCalls = 0
+    let initCalls = 0
+
     type State = number
     type Action = [tag: 'inc']
     type Deps = Record<string, never>
 
-    const init = (count: number): Command<State, Action, Deps> => [count, (_, { inc }) => inc()]
-
-    const update: Update<State, Action, Deps> = {
+    const init = () => {
+      initCalls++
+      return [0] as const
+    }
+    const update: UpdateMap<State, Action, Deps> = {
       inc: (state) => [state + 1]
     }
 
-    let initial = 5
+    const createInit = () => {
+      initCreatorCalls++
 
-    const { result, rerender } = renderHook(() => useBacklash(initial, init, update, {}))
+      return () => init()
+    }
 
-    expect(result.current[0]).toEqual(6)
+    const Counter = () => {
+      const [state, actions] = useBacklash(createInit(), update, {})
 
-    act(() => {
-      result.current[1].inc()
+      useEffect(() => {
+        actions.inc()
+      }, [actions])
+
+      useEffect(() => {
+        setTimeout(actions.inc, 100)
+      }, [actions])
+
+      useEffect(() => {
+        setTimeout(actions.inc, 200)
+      }, [actions])
+
+      renders++
+
+      return <div data-testid='result'>{state}</div>
+    }
+
+    const { getByTestId } = render(<Counter />)
+
+    await waitFor(() => {
+      expect(getByTestId('result').textContent).toEqual(`${renders - 1}`)
+      expect(initCreatorCalls).toEqual(renders)
+      expect(initCalls).toEqual(1)
     })
+  })
 
-    expect(result.current[0]).toEqual(7)
+  test('should not update "update" object', async () => {
+    let newUpdateWasCalled = false
+    let setNewUpdateWasCalled = false
 
-    initial = 10
-    rerender()
+    type State = number
+    type Action = [tag: 'inc']
+    type Deps = Record<string, never>
 
-    expect(result.current[0]).toEqual(7)
+    const init = () => [0] as const
+
+    const oldUpdate: UpdateMap<State, Action, Deps> = {
+      inc: (state) => [state + 1]
+    }
+
+    const newUpdate: UpdateMap<State, Action, Deps> = {
+      inc: (state) => {
+        newUpdateWasCalled = true
+        return [state + 100]
+      }
+    }
+
+    const Counter = () => {
+      const [update, setUpdate] = useState(oldUpdate)
+      const [state, actions] = useBacklash(init, update, {})
+
+      useEffect(() => {
+        actions.inc()
+      }, [actions])
+
+      useEffect(() => {
+        setTimeout(() => {
+          setNewUpdateWasCalled = true
+          setUpdate(newUpdate)
+        }, 100)
+      }, [])
+
+      useEffect(() => {
+        setTimeout(actions.inc, 200)
+      }, [actions])
+
+      return <div data-testid='result'>{state}</div>
+    }
+
+    const { getByTestId } = render(<Counter />)
+
+    await waitFor(() => {
+      expect(getByTestId('result').textContent).toEqual(`2`)
+      expect(setNewUpdateWasCalled).toBeTruthy()
+      expect(newUpdateWasCalled).toBeFalsy()
+    })
   })
 })

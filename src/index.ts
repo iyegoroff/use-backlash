@@ -13,12 +13,13 @@ type DeepReadonly<T> = { readonly [P in keyof T]: DeepReadonly<T[P]> }
 type PrettyDeepReadonly<T> = PrettyType<{ readonly [P in keyof T]: PrettyDeepReadonly<T[P]> }>
 
 export function useBacklash<
-  Init extends (arg: never) => readonly [State, ...((deps: Deps, actions: ActionMap) => void)[]],
+  Init extends () => readonly [State, ...((deps: Deps, actions: ActionMap) => void)[]],
   UpdateMap extends Readonly<
     Record<
       string,
       (
-        state: never,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        state: any,
         ...args: never[]
       ) => readonly [State, ...((deps: Deps, actions: ActionMap) => void)[]]
     >
@@ -31,16 +32,13 @@ export function useBacklash<
       : never
   }
 >(
-  initial: Parameters<Init>[0],
   init: Init,
   update: UpdateMap,
   dependencies: Deps
 ): readonly [PrettyDeepReadonly<State>, ActionMap]
 
 export function useBacklash<
-  Init extends (
-    arg: never
-  ) => readonly [
+  Init extends () => readonly [
     State,
     ...((
       deps: Deps,
@@ -65,7 +63,6 @@ export function useBacklash<
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
   Deps extends Readonly<Record<string, unknown>>
 >(
-  initial: Parameters<Init>[0],
   init: Init,
   update: UpdateMap,
   dependencies: Deps
@@ -73,7 +70,7 @@ export function useBacklash<
   PrettyDeepReadonly<State>,
   Readonly<Record<string, (...args: readonly never[]) => void>>
 ] {
-  const [[initialState, ...initialEffects]] = useState(() => init(initial))
+  const [[initialState, ...initialEffects]] = useState(init)
   const [state, setState] = useState(initialState)
   const mutState = useRef(state)
   const isRunning = useRef(true)
@@ -101,6 +98,8 @@ export function useBacklash<
   )
 
   useEffect(() => {
+    isRunning.current = true
+
     while (effects.current.length > 0) {
       effects.current.shift()?.(dependencies, actions)
     }
@@ -114,7 +113,7 @@ export function useBacklash<
   return [state, actions]
 }
 
-type ActionMap<Action extends readonly [string, ...unknown[]]> = PrettyType<
+export type ActionMap<Action extends readonly [string, ...unknown[]]> = PrettyType<
   UnionToIntersection<
     Action extends readonly [infer ActionTag, ...infer ActionParams]
       ? ActionTag extends string
@@ -135,7 +134,7 @@ export type Command<
   Deps extends Readonly<Record<string, unknown>>
 > = readonly [State, ...(readonly Effect<Action, Deps>[])]
 
-export type Update<
+export type UpdateMap<
   State,
   Action extends readonly [string, ...unknown[]],
   Deps extends Readonly<Record<string, unknown>>

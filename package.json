@@ -79,6 +79,6 @@
     "react": "*"
   },
   "typeCoverage": {
-    "atLeast": 100
+    "atLeast": 99
   }
 }
