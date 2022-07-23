@@ -1,4 +1,4 @@
-import React, { memo, useRef } from 'react'
+import React from 'react'
 import { Command, UpdateMap, useBacklash } from 'use-backlash'
 import { gap } from './gap'
 

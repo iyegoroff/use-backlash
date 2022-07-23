@@ -2,6 +2,30 @@ import React, { useEffect, useState, useLayoutEffect, useCallback, StrictMode } 
 import { render, cleanup, waitFor, fireEvent, renderHook, act } from '@testing-library/react'
 import { Command, UpdateMap, useBacklash } from '../src'
 
+describe('example test', () => {
+  afterEach(cleanup)
+
+  type State = number
+  type Action = [tag: 'inc']
+  type Deps = Record<string, never>
+
+  const init = (): Command<State, Action, Deps> => [0]
+
+  const update: UpdateMap<State, Action, Deps> = {
+    inc: (state) => [state + 1]
+  }
+
+  test('renderHook & act example', () => {
+    const { result } = renderHook(() => useBacklash(init, update))
+
+    act(() => {
+      result.current[1].inc()
+    })
+
+    expect(result.current[0]).toBe(1)
+  })
+})
+
 describe('useBacklash', () => {
   afterEach(cleanup)
 
@@ -24,7 +48,7 @@ describe('useBacklash', () => {
     }
 
     const Counter = () => {
-      const [state, actions] = useBacklash(init, update, {})
+      const [state, actions] = useBacklash(init, update)
 
       useEffect(() => {
         actions.inc()
@@ -50,11 +74,21 @@ describe('useBacklash', () => {
     type Action = [tag: 'push', value: number]
     type Deps = Record<string, never>
 
-    const init = () => [[]] as const
+    const init = (): Command<State, Action, Deps> => [
+      [],
+      (_, { push }) => push(0),
+      (_, { push }) => push(1),
+      (_, { push }) => push(5)
+    ]
     const update: UpdateMap<State, Action, Deps> = {
       push: (state, value) => [
         [...state, value],
         (_, { push }) => {
+          if (value === 1) {
+            push(2)
+            push(3)
+            push(4)
+          }
           if (value === 20) {
             push(21)
             push(22)
@@ -64,7 +98,7 @@ describe('useBacklash', () => {
     }
 
     const List = () => {
-      const [state, actions] = useBacklash(init, update, {})
+      const [state, actions] = useBacklash(init, update)
 
       useEffect(() => {
         actions.push(10)
@@ -76,7 +110,7 @@ describe('useBacklash', () => {
     }
 
     const { getByTestId } = render(<List />)
-    expect(getByTestId('result').textContent).toEqual('10,20,21,22,30')
+    expect(getByTestId('result').textContent).toEqual('0,1,2,3,4,5,10,20,21,22,30')
   })
 
   test('should handle async effects', async () => {
@@ -183,13 +217,67 @@ describe('useBacklash', () => {
     }
 
     const Counter = () => {
-      const [state] = useBacklash(init, update, {})
+      const [state] = useBacklash(init, update)
 
       return <div data-testid='result'>{state}</div>
     }
 
     const { getByTestId } = render(<Counter />)
     expect(getByTestId('result').textContent).toEqual('3')
+  })
+
+  test('should ignore dependency changes', async () => {
+    type State = number
+    type Action = [tag: 'add', amount: number] | [tag: 'inc']
+    type Deps = { amount: number }
+
+    const init = (): Command<State, Action, Deps> => [0, ({ amount }, { add }) => add(amount)]
+
+    const update: UpdateMap<State, Action, Deps> = {
+      inc: (state) => [
+        state,
+        ({ amount }, { add }) => {
+          add(amount)
+        }
+      ],
+      add: (state, amount) => [state + amount]
+    }
+
+    const Counter = () => {
+      const [amount, setAmount] = useState(3)
+      const [state, { inc }] = useBacklash(init, update, { amount })
+
+      const incAmount = useCallback(() => setAmount((a) => a + 3), [])
+
+      return (
+        <>
+          <button data-testid='inc' onClick={inc} />
+          <button data-testid='inc-amount' onClick={incAmount} />
+          <div data-testid='result'>{state}</div>
+        </>
+      )
+    }
+
+    const { getByTestId } = render(<Counter />)
+
+    const inc = getByTestId('inc')
+    const incAmount = getByTestId('inc-amount')
+
+    fireEvent.click(inc)
+    fireEvent.click(inc)
+    fireEvent.click(incAmount)
+
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        fireEvent.click(inc)
+        fireEvent.click(inc)
+        resolve(undefined)
+      }, 300)
+    })
+
+    await waitFor(() => {
+      expect(getByTestId('result').textContent).toEqual('15')
+    })
   })
 
   test('should queue effects during commit phase', () => {
@@ -211,7 +299,7 @@ describe('useBacklash', () => {
 
     const Counter = () => {
       const [hasClicked, setHasClicked] = useState(false)
-      const [state, actions] = useBacklash(init, update, {})
+      const [state, actions] = useBacklash(init, update)
 
       useLayoutEffect(() => {
         if (hasClicked) {
@@ -244,35 +332,30 @@ describe('useBacklash', () => {
     expect(effectCount).toEqual(2)
   })
 
-  test('should take account of StrictMode', () => {
+  test('should take account of StrictMode', async () => {
     type State = number
-    type Action = [tag: 'inc', source: string]
+    type Action = [tag: 'inc']
     type Deps = Record<string, never>
 
     const init = (count: number): Command<State, Action, Deps> => [
       count,
-      (_, { inc }) => inc('init')
+      (_, { inc }) => inc(),
+      (_, { inc }) => inc()
     ]
 
     const update: UpdateMap<State, Action, Deps> = {
-      inc: (state, source) => {
-        console.log(source, state + 1)
-        return [state + 1]
-      }
+      inc: (state) => [state + 1]
     }
 
     const Counter = () => {
-      const [state, actions] = useBacklash(() => init(1), update, {})
+      const [state, actions] = useBacklash(() => init(1), update)
 
-      useEffect(() => {
-        actions.inc('useEffect')
-      }, [actions])
-
-      useLayoutEffect(() => {
-        actions.inc('useLayoutEffect')
-      }, [actions])
-
-      return <div data-testid='result'>{state}</div>
+      return (
+        <>
+          <button data-testid='button' onClick={actions.inc} />
+          <div data-testid='result'>{state}</div>
+        </>
+      )
     }
 
     const App = () => (
@@ -282,7 +365,62 @@ describe('useBacklash', () => {
     )
 
     const { getByTestId } = render(<App />)
-    expect(getByTestId('result').textContent).toEqual('4')
+    const button = getByTestId('button')
+
+    fireEvent.click(button)
+
+    await new Promise((resolve) => {
+      setTimeout(() => resolve(fireEvent.click(button)), 100)
+    })
+
+    fireEvent.click(button)
+
+    await waitFor(() => {
+      expect(getByTestId('result').textContent).toEqual('6')
+    })
+  })
+
+  test('should run intial effects prior to effects triggered from useLayoutEffect', () => {
+    type State = string[]
+    type Action = [tag: 'add', value: string]
+    type Deps = Record<string, never>
+
+    const init = (value: string): Command<State, Action, Deps> => [
+      [value],
+      (_, { add }) => add('init 1'),
+      (_, { add }) => add('init 2'),
+      (_, { add }) => add('init 3')
+    ]
+
+    const update: UpdateMap<State, Action, Deps> = {
+      add: (state, value) => [[...state, value]]
+    }
+
+    const Counter = () => {
+      const [state, actions] = useBacklash(() => init('first'), update)
+
+      useEffect(() => {
+        actions.add('useEffect 1')
+        actions.add('useEffect 2')
+        actions.add('useEffect 3')
+      }, [actions])
+
+      useLayoutEffect(() => {
+        actions.add('useLayoutEffect 1')
+        actions.add('useLayoutEffect 2')
+        actions.add('useLayoutEffect 3')
+      }, [actions])
+
+      return <div data-testid='result'>{state.join()}</div>
+    }
+
+    const App = () => <Counter />
+
+    const { getByTestId } = render(<App />)
+    expect(getByTestId('result').textContent).toEqual(
+      'first,init 1,init 2,init 3,useLayoutEffect 1,useLayoutEffect 2,useLayoutEffect 3,' +
+        'useEffect 1,useEffect 2,useEffect 3'
+    )
   })
 
   test('should not rerender when setting same state', async () => {
@@ -298,7 +436,7 @@ describe('useBacklash', () => {
     }
 
     const Counter = () => {
-      const [state, actions] = useBacklash(init, update, {})
+      const [state, actions] = useBacklash(init, update)
 
       renders++
 
@@ -315,17 +453,11 @@ describe('useBacklash', () => {
     const button = getByTestId('button')
 
     await new Promise((resolve) => {
-      setTimeout(() => {
-        fireEvent.click(button)
-        resolve(undefined)
-      }, 100)
+      setTimeout(() => resolve(fireEvent.click(button)), 100)
     })
 
     await new Promise((resolve) => {
-      setTimeout(() => {
-        fireEvent.click(button)
-        resolve(undefined)
-      }, 300)
+      setTimeout(() => resolve(fireEvent.click(button)), 300)
     })
 
     await waitFor(() => {
@@ -357,7 +489,7 @@ describe('useBacklash', () => {
     }
 
     const Counter = () => {
-      const [state, actions] = useBacklash(createInit(), update, {})
+      const [state, actions] = useBacklash(createInit(), update)
 
       useEffect(() => {
         actions.inc()
@@ -385,7 +517,7 @@ describe('useBacklash', () => {
     })
   })
 
-  test('should not update "update" object', async () => {
+  test('should ignore update object changes', async () => {
     let newUpdateWasCalled = false
     let setNewUpdateWasCalled = false
 
@@ -408,7 +540,7 @@ describe('useBacklash', () => {
 
     const Counter = () => {
       const [update, setUpdate] = useState(oldUpdate)
-      const [state, actions] = useBacklash(init, update, {})
+      const [state, actions] = useBacklash(init, update)
 
       useEffect(() => {
         actions.inc()

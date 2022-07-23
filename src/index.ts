@@ -24,20 +24,54 @@ export function useBacklash<
       ) => readonly [State, ...((deps: Deps, actions: ActionMap) => void)[]]
     >
   >,
-  Deps extends Readonly<Record<string, unknown>>,
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
   ActionMap extends {
     readonly [Key in keyof UpdateMap]: Parameters<UpdateMap[Key]> extends [unknown, ...infer Rest]
       ? (...args: Rest) => void
       : never
-  }
+  },
+  Deps extends Readonly<Record<string, unknown>> = Readonly<Record<string, never>>
+>(init: Init, update: UpdateMap, deps?: Deps): readonly [PrettyDeepReadonly<State>, ActionMap]
+
+export function useBacklash<
+  Init extends () => readonly [
+    State,
+    ...((
+      deps: Readonly<Record<string, unknown>>,
+      actions: Readonly<Record<string, (...args: readonly never[]) => void>>
+    ) => void)[]
+  ],
+  UpdateMap extends Readonly<
+    Record<
+      string,
+      (
+        state: never,
+        ...args: never[]
+      ) => readonly [
+        State,
+        ...((
+          deps: Readonly<Record<string, unknown>>,
+          actions: Readonly<Record<string, (...actionArgs: readonly never[]) => void>>
+        ) => void)[]
+      ]
+    >
+  >,
+  State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
+  Deps extends Readonly<Record<string, unknown>>
 >(
   init: Init,
   update: UpdateMap,
-  dependencies: Deps
-): readonly [PrettyDeepReadonly<State>, ActionMap]
+  dependencies?: Deps
+): readonly [
+  PrettyDeepReadonly<State>,
+  Readonly<Record<string, (...args: readonly never[]) => void>>
+] {
+  return typeof dependencies === 'object'
+    ? useBacklashImpl(init, update, dependencies)
+    : useBacklashImpl(init, update, {})
+}
 
-export function useBacklash<
+function useBacklashImpl<
   Init extends () => readonly [
     State,
     ...((
@@ -82,14 +116,23 @@ export function useBacklash<
         tag,
         (...args: readonly never[]) => {
           if (isRunning.current) {
+            const effs = effects.current
+
+            while (effs.length > 0) {
+              effs.pop()?.(dependencies, actions)
+            }
+
             const [nextState, ...nextEffects] = up(mutState.current, ...args)
+
             if (nextState !== mutState.current) {
               mutState.current = nextState
               setState(nextState)
             }
-            effects.current.unshift(...nextEffects)
-            while (effects.current.length > 0) {
-              effects.current.shift()?.(dependencies, actions)
+
+            effs.unshift(...nextEffects)
+
+            while (effs.length > 0) {
+              effs.shift()?.(dependencies, actions)
             }
           }
         }
@@ -101,7 +144,7 @@ export function useBacklash<
     isRunning.current = true
 
     while (effects.current.length > 0) {
-      effects.current.shift()?.(dependencies, actions)
+      effects.current.pop()?.(dependencies, actions)
     }
 
     return () => {
