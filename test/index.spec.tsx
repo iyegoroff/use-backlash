@@ -7,11 +7,11 @@ describe('example test', () => {
 
   type State = number
   type Action = [tag: 'inc']
-  type Deps = Record<string, never>
+  type Injects = Record<string, never>
 
-  const init = (): Command<State, Action, Deps> => [0]
+  const init = (): Command<State, Action, Injects> => [0]
 
-  const update: UpdateMap<State, Action, Deps> = {
+  const update: UpdateMap<State, Action, Injects> = {
     inc: (state) => [state + 1]
   }
 
@@ -35,10 +35,10 @@ describe('useBacklash', () => {
 
     type State = number
     type Action = [tag: 'inc']
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
     const init = () => [0] as const
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       inc: (state) => [
         state + 1,
         () => {
@@ -72,15 +72,15 @@ describe('useBacklash', () => {
   test('should preserve effect order', () => {
     type State = readonly number[]
     type Action = [tag: 'push', value: number]
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
-    const init = (): Command<State, Action, Deps> => [
+    const init = (): Command<State, Action, Injects> => [
       [],
       (_, { push }) => push(0),
       (_, { push }) => push(1),
       (_, { push }) => push(5)
     ]
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       push: (state, value) => [
         [...state, value],
         (_, { push }) => {
@@ -116,10 +116,10 @@ describe('useBacklash', () => {
   test('should handle async effects', async () => {
     type State = 'idle' | 'loading' | { text: string }
     type Action = [tag: 'start'] | [tag: 'done', text: string]
-    type Deps = { fetch: () => Promise<string> }
+    type Injects = { fetch: () => Promise<string> }
 
     const init = () => ['idle'] as const
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       start: () => ['loading', ({ fetch }, { done }) => fetch().then(done)],
 
       done: (_, text) => [{ text }]
@@ -150,10 +150,10 @@ describe('useBacklash', () => {
   test('should cleanup on unmount', async () => {
     type State = number
     type Action = [tag: 'inc']
-    type Deps = { delay: () => Promise<unknown> }
+    type Injects = { delay: () => Promise<unknown> }
 
     const init = () => [0] as const
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       inc: (state) => [state + 1, ({ delay }, { inc }) => delay().then(inc)]
     }
 
@@ -203,16 +203,16 @@ describe('useBacklash', () => {
   test('should trigger initial effects', () => {
     type State = number
     type Action = [tag: 'inc']
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
-    const init = (): Command<State, Action, Deps> => [
+    const init = (): Command<State, Action, Injects> => [
       0,
       (_, { inc }) => inc(),
       (_, { inc }) => inc(),
       (_, { inc }) => inc()
     ]
 
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       inc: (state) => [state + 1]
     }
 
@@ -229,11 +229,11 @@ describe('useBacklash', () => {
   test('should ignore dependency changes', async () => {
     type State = number
     type Action = [tag: 'add', amount: number] | [tag: 'inc']
-    type Deps = { amount: number }
+    type Injects = { amount: number }
 
-    const init = (): Command<State, Action, Deps> => [0, ({ amount }, { add }) => add(amount)]
+    const init = (): Command<State, Action, Injects> => [0, ({ amount }, { add }) => add(amount)]
 
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       inc: (state) => [
         state,
         ({ amount }, { add }) => {
@@ -285,10 +285,10 @@ describe('useBacklash', () => {
 
     type State = number
     type Action = [tag: 'inc']
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
     const init = () => [0] as const
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       inc: (state) => [
         state + 1,
         () => {
@@ -335,15 +335,15 @@ describe('useBacklash', () => {
   test('should take account of StrictMode', async () => {
     type State = number
     type Action = [tag: 'inc']
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
-    const init = (count: number): Command<State, Action, Deps> => [
+    const init = (count: number): Command<State, Action, Injects> => [
       count,
       (_, { inc }) => inc(),
       (_, { inc }) => inc()
     ]
 
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       inc: (state) => [state + 1]
     }
 
@@ -383,16 +383,16 @@ describe('useBacklash', () => {
   test('should run intial effects prior to effects triggered from useLayoutEffect', () => {
     type State = string[]
     type Action = [tag: 'add', value: string]
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
-    const init = (value: string): Command<State, Action, Deps> => [
+    const init = (value: string): Command<State, Action, Injects> => [
       [value],
       (_, { add }) => add('init 1'),
       (_, { add }) => add('init 2'),
       (_, { add }) => add('init 3')
     ]
 
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       add: (state, value) => [[...state, value]]
     }
 
@@ -428,10 +428,10 @@ describe('useBacklash', () => {
 
     type State = number[]
     type Action = [tag: 'clear']
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
     const init = () => [[1, 2, 3]] as const
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       clear: (state) => [state.length === 0 ? state : []]
     }
 
@@ -472,13 +472,13 @@ describe('useBacklash', () => {
 
     type State = number
     type Action = [tag: 'inc']
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
     const init = () => {
       initCalls++
       return [0] as const
     }
-    const update: UpdateMap<State, Action, Deps> = {
+    const update: UpdateMap<State, Action, Injects> = {
       inc: (state) => [state + 1]
     }
 
@@ -523,15 +523,15 @@ describe('useBacklash', () => {
 
     type State = number
     type Action = [tag: 'inc']
-    type Deps = Record<string, never>
+    type Injects = Record<string, never>
 
     const init = () => [0] as const
 
-    const oldUpdate: UpdateMap<State, Action, Deps> = {
+    const oldUpdate: UpdateMap<State, Action, Injects> = {
       inc: (state) => [state + 1]
     }
 
-    const newUpdate: UpdateMap<State, Action, Deps> = {
+    const newUpdate: UpdateMap<State, Action, Injects> = {
       inc: (state) => {
         newUpdateWasCalled = true
         return [state + 100]

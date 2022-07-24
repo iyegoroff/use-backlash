@@ -13,7 +13,7 @@ type DeepReadonly<T> = { readonly [P in keyof T]: DeepReadonly<T[P]> }
 type PrettyDeepReadonly<T> = PrettyType<{ readonly [P in keyof T]: PrettyDeepReadonly<T[P]> }>
 
 export function useBacklash<
-  Init extends () => readonly [State, ...((deps: Deps, actions: ActionMap) => void)[]],
+  Init extends () => readonly [State, ...((injects: InjectMap, actions: ActionMap) => void)[]],
   UpdateMap extends Readonly<
     Record<
       string,
@@ -21,7 +21,7 @@ export function useBacklash<
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         state: any,
         ...args: never[]
-      ) => readonly [State, ...((deps: Deps, actions: ActionMap) => void)[]]
+      ) => readonly [State, ...((injects: InjectMap, actions: ActionMap) => void)[]]
     >
   >,
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
@@ -30,14 +30,18 @@ export function useBacklash<
       ? (...args: Rest) => void
       : never
   },
-  Deps extends Readonly<Record<string, unknown>> = Readonly<Record<string, never>>
->(init: Init, update: UpdateMap, deps?: Deps): readonly [PrettyDeepReadonly<State>, ActionMap]
+  InjectMap extends Readonly<Record<string, unknown>> = Readonly<Record<string, never>>
+>(
+  init: Init,
+  update: UpdateMap,
+  injects?: InjectMap
+): readonly [PrettyDeepReadonly<State>, ActionMap]
 
 export function useBacklash<
   Init extends () => readonly [
     State,
     ...((
-      deps: Readonly<Record<string, unknown>>,
+      injectMap: Readonly<Record<string, unknown>>,
       actions: Readonly<Record<string, (...args: readonly never[]) => void>>
     ) => void)[]
   ],
@@ -50,32 +54,30 @@ export function useBacklash<
       ) => readonly [
         State,
         ...((
-          deps: Readonly<Record<string, unknown>>,
+          injectMap: Readonly<Record<string, unknown>>,
           actions: Readonly<Record<string, (...actionArgs: readonly never[]) => void>>
         ) => void)[]
       ]
     >
   >,
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
-  Deps extends Readonly<Record<string, unknown>>
+  InjectMap extends Readonly<Record<string, unknown>>
 >(
   init: Init,
   update: UpdateMap,
-  dependencies?: Deps
+  injects?: InjectMap
 ): readonly [
   PrettyDeepReadonly<State>,
   Readonly<Record<string, (...args: readonly never[]) => void>>
 ] {
-  return typeof dependencies === 'object'
-    ? useBacklashImpl(init, update, dependencies)
-    : useBacklashImpl(init, update, {})
+  return useBacklashImpl(init, update, injects ?? {})
 }
 
 function useBacklashImpl<
   Init extends () => readonly [
     State,
     ...((
-      deps: Deps,
+      injectMap: InjectMap,
       actions: Readonly<Record<string, (...args: readonly never[]) => void>>
     ) => void)[]
   ],
@@ -88,18 +90,18 @@ function useBacklashImpl<
       ) => readonly [
         State,
         ...((
-          deps: Deps,
+          injectMap: InjectMap,
           actions: Readonly<Record<string, (...actionArgs: readonly never[]) => void>>
         ) => void)[]
       ]
     >
   >,
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
-  Deps extends Readonly<Record<string, unknown>>
+  InjectMap extends Readonly<Record<string, unknown>>
 >(
   init: Init,
   update: UpdateMap,
-  dependencies: Deps
+  injects: InjectMap
 ): readonly [
   PrettyDeepReadonly<State>,
   Readonly<Record<string, (...args: readonly never[]) => void>>
@@ -118,9 +120,7 @@ function useBacklashImpl<
           if (isRunning.current) {
             const effs = effects.current
 
-            while (effs.length > 0) {
-              effs.pop()?.(dependencies, actions)
-            }
+            while (effs.length > 0) effs.pop()?.(injects, actions)
 
             const [nextState, ...nextEffects] = up(mutState.current, ...args)
 
@@ -131,9 +131,7 @@ function useBacklashImpl<
 
             effs.unshift(...nextEffects)
 
-            while (effs.length > 0) {
-              effs.shift()?.(dependencies, actions)
-            }
+            while (effs.length > 0) effs.shift()?.(injects, actions)
           }
         }
       ])
@@ -143,9 +141,9 @@ function useBacklashImpl<
   useEffect(() => {
     isRunning.current = true
 
-    while (effects.current.length > 0) {
-      effects.current.pop()?.(dependencies, actions)
-    }
+    const effs = effects.current
+
+    while (effs.length > 0) effs.pop()?.(injects, actions)
 
     return () => {
       isRunning.current = false
@@ -166,34 +164,37 @@ export type ActionMap<Action extends readonly [string, ...unknown[]]> = PrettyTy
   >
 >
 
-type Effect<
+export type Effect<
   Action extends readonly [string, ...unknown[]],
-  Deps extends Readonly<Record<string, unknown>>
-> = (deps: Deps, actions: ActionMap<Action>) => void
+  InjectMap extends Readonly<Record<string, unknown>>
+> = (injects: InjectMap, actions: ActionMap<Action>) => void
 
 export type Command<
   State,
   Action extends readonly [string, ...unknown[]],
-  Deps extends Readonly<Record<string, unknown>>
-> = readonly [State, ...(readonly Effect<Action, Deps>[])]
+  InjectMap extends Readonly<Record<string, unknown>>
+> = readonly [State, ...(readonly Effect<Action, InjectMap>[])]
 
 export type UpdateMap<
   State,
   Action extends readonly [string, ...unknown[]],
-  Deps extends Readonly<Record<string, unknown>>
-> = UpdateMapImpl<DeepReadonly<State>, Action, Deps, Action>
+  InjectMap extends Readonly<Record<string, unknown>>
+> = UpdateMapImpl<DeepReadonly<State>, Action, InjectMap, Action>
 
 type UpdateMapImpl<
   State,
   Action extends readonly [string, ...unknown[]],
-  Deps extends Readonly<Record<string, unknown>>,
+  InjectMap extends Readonly<Record<string, unknown>>,
   CombinedAction extends Action
 > = PrettyType<
   UnionToIntersection<
     Action extends readonly [infer Tag, ...infer Params]
       ? Tag extends string
         ? Readonly<
-            Record<Tag, (state: State, ...args: Params) => Command<State, CombinedAction, Deps>>
+            Record<
+              Tag,
+              (state: State, ...args: Params) => Command<State, CombinedAction, InjectMap>
+            >
           >
         : never
       : never

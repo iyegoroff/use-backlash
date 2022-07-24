@@ -14,14 +14,14 @@ type Action =
   | [tag: 'failure', error: unknown]
   | [tag: 'clear']
 
-type Deps = { fetchQuote: () => Promise<string> }
+type Injects = { fetchQuote: () => Promise<string> }
 
-const init = (requestQuoteOnInit: boolean): Command<State, Action, Deps> => {
+const init = (requestQuoteOnInit: boolean): Command<State, Action, Injects> => {
   const state: State = { status: 'idle', quotes: [] }
   return requestQuoteOnInit ? [state, (_, { requestQuote }) => requestQuote()] : [state]
 }
 
-const update: UpdateMap<State, Action, Deps> = {
+const update: UpdateMap<State, Action, Injects> = {
   requestQuote: (state) => [
     { ...state, status: 'loading' },
     ({ fetchQuote }, { success, failure }) => {

@@ -4,11 +4,11 @@ import { gap } from './gap'
 
 type State = string
 type Action = [tag: 'update', value: string]
-type Deps = Record<string, never>
+type Injects = Record<string, never>
 
-const init = (): Command<State, Action, Deps> => ['']
+const init = (): Command<State, Action, Injects> => ['']
 
-const update: UpdateMap<State, Action, Deps> = {
+const update: UpdateMap<State, Action, Injects> = {
   update: (_, value) => [value]
 }
 

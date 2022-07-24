@@ -4,18 +4,18 @@ import { gap } from './gap'
 
 type State = 'loading' | number
 type Action = [tag: 'loaded', count: number] | [tag: 'inc'] | [tag: 'dec']
-type Deps = { store: (item: string) => void; load: () => string | undefined }
+type Injects = { store: (item: string) => void; load: () => string | undefined }
 
 const key = 'counter'
 
-const init = (): Command<State, Action, Deps> => [
+const init = (): Command<State, Action, Injects> => [
   'loading',
   ({ load }, { loaded }) => loaded(+(load() ?? 0) || 0)
 ]
 
 const modify =
   (op: (val: number) => number) =>
-  (state: State): Command<State, Action, Deps> => {
+  (state: State): Command<State, Action, Injects> => {
     if (state === 'loading') {
       return [state]
     }
@@ -25,7 +25,7 @@ const modify =
     return [next, ({ store }) => store(JSON.stringify(next))]
   }
 
-const update: UpdateMap<State, Action, Deps> = {
+const update: UpdateMap<State, Action, Injects> = {
   loaded: (_, count) => [count],
 
   inc: modify((val) => val + 1),
