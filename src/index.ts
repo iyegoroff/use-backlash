@@ -12,8 +12,12 @@ type DeepReadonly<T> = { readonly [P in keyof T]: DeepReadonly<T[P]> }
 
 type PrettyDeepReadonly<T> = PrettyType<{ readonly [P in keyof T]: PrettyDeepReadonly<T[P]> }>
 
+type NeverMap = Readonly<Record<string, never>>
+
+type UnknownMap = Readonly<Record<string, unknown>>
+
 export function useBacklash<
-  Init extends () => readonly [State, ...((injects: InjectMap, actions: ActionMap) => void)[]],
+  Init extends () => readonly [State, ...((actions: ActionMap, injects: InjectMap) => void)[]],
   UpdateMap extends Readonly<
     Record<
       string,
@@ -21,7 +25,7 @@ export function useBacklash<
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         state: any,
         ...args: never[]
-      ) => readonly [State, ...((injects: InjectMap, actions: ActionMap) => void)[]]
+      ) => readonly [State, ...((actions: ActionMap, injects: InjectMap) => void)[]]
     >
   >,
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
@@ -30,7 +34,7 @@ export function useBacklash<
       ? (...args: Rest) => void
       : never
   },
-  InjectMap extends Readonly<Record<string, unknown>> = Readonly<Record<string, never>>
+  InjectMap extends UnknownMap = NeverMap
 >(
   init: Init,
   update: UpdateMap,
@@ -41,8 +45,8 @@ export function useBacklash<
   Init extends () => readonly [
     State,
     ...((
-      injectMap: Readonly<Record<string, unknown>>,
-      actions: Readonly<Record<string, (...args: readonly never[]) => void>>
+      actions: Readonly<Record<string, (...args: readonly never[]) => void>>,
+      injectMap: UnknownMap
     ) => void)[]
   ],
   UpdateMap extends Readonly<
@@ -54,14 +58,14 @@ export function useBacklash<
       ) => readonly [
         State,
         ...((
-          injectMap: Readonly<Record<string, unknown>>,
-          actions: Readonly<Record<string, (...actionArgs: readonly never[]) => void>>
+          actions: Readonly<Record<string, (...actionArgs: readonly never[]) => void>>,
+          injectMap: UnknownMap
         ) => void)[]
       ]
     >
   >,
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
-  InjectMap extends Readonly<Record<string, unknown>>
+  InjectMap extends UnknownMap
 >(
   init: Init,
   update: UpdateMap,
@@ -77,8 +81,8 @@ function useBacklashImpl<
   Init extends () => readonly [
     State,
     ...((
-      injectMap: InjectMap,
-      actions: Readonly<Record<string, (...args: readonly never[]) => void>>
+      actions: Readonly<Record<string, (...args: readonly never[]) => void>>,
+      injectMap: InjectMap
     ) => void)[]
   ],
   UpdateMap extends Readonly<
@@ -90,14 +94,14 @@ function useBacklashImpl<
       ) => readonly [
         State,
         ...((
-          injectMap: InjectMap,
-          actions: Readonly<Record<string, (...actionArgs: readonly never[]) => void>>
+          actions: Readonly<Record<string, (...actionArgs: readonly never[]) => void>>,
+          injectMap: InjectMap
         ) => void)[]
       ]
     >
   >,
   State extends Parameters<UpdateMap[keyof UpdateMap]>[0],
-  InjectMap extends Readonly<Record<string, unknown>>
+  InjectMap extends UnknownMap
 >(
   init: Init,
   update: UpdateMap,
@@ -120,7 +124,7 @@ function useBacklashImpl<
           if (isRunning.current) {
             const effs = effects.current
 
-            while (effs.length > 0) effs.pop()?.(injects, actions)
+            while (effs.length > 0) effs.pop()?.(actions, injects)
 
             const [nextState, ...nextEffects] = up(mutState.current, ...args)
 
@@ -131,7 +135,7 @@ function useBacklashImpl<
 
             effs.unshift(...nextEffects)
 
-            while (effs.length > 0) effs.shift()?.(injects, actions)
+            while (effs.length > 0) effs.shift()?.(actions, injects)
           }
         }
       ])
@@ -143,7 +147,7 @@ function useBacklashImpl<
 
     const effs = effects.current
 
-    while (effs.length > 0) effs.pop()?.(injects, actions)
+    while (effs.length > 0) effs.pop()?.(actions, injects)
 
     return () => {
       isRunning.current = false
@@ -166,25 +170,25 @@ export type ActionMap<Action extends readonly [string, ...unknown[]]> = PrettyTy
 
 export type Effect<
   Action extends readonly [string, ...unknown[]],
-  InjectMap extends Readonly<Record<string, unknown>>
-> = (injects: InjectMap, actions: ActionMap<Action>) => void
+  InjectMap extends UnknownMap = NeverMap
+> = (actions: ActionMap<Action>, injects: InjectMap) => void
 
 export type Command<
   State,
   Action extends readonly [string, ...unknown[]],
-  InjectMap extends Readonly<Record<string, unknown>>
+  InjectMap extends UnknownMap = NeverMap
 > = readonly [State, ...(readonly Effect<Action, InjectMap>[])]
 
 export type UpdateMap<
   State,
   Action extends readonly [string, ...unknown[]],
-  InjectMap extends Readonly<Record<string, unknown>>
+  InjectMap extends UnknownMap = NeverMap
 > = UpdateMapImpl<DeepReadonly<State>, Action, InjectMap, Action>
 
 type UpdateMapImpl<
   State,
   Action extends readonly [string, ...unknown[]],
-  InjectMap extends Readonly<Record<string, unknown>>,
+  InjectMap extends UnknownMap,
   CombinedAction extends Action
 > = PrettyType<
   UnionToIntersection<

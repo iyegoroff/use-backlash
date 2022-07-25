@@ -10,7 +10,7 @@ const key = 'counter'
 
 const init = (): Command<State, Action, Injects> => [
   'loading',
-  ({ load }, { loaded }) => loaded(+(load() ?? 0) || 0)
+  ({ loaded }, { load }) => loaded(Number(load()) || 0)
 ]
 
 const modify =
@@ -22,7 +22,7 @@ const modify =
 
     const next = op(state)
 
-    return [next, ({ store }) => store(JSON.stringify(next))]
+    return [next, (_, { store }) => store(`${next}`)]
   }
 
 const update: UpdateMap<State, Action, Injects> = {

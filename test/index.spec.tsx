@@ -76,14 +76,14 @@ describe('useBacklash', () => {
 
     const init = (): Command<State, Action, Injects> => [
       [],
-      (_, { push }) => push(0),
-      (_, { push }) => push(1),
-      (_, { push }) => push(5)
+      ({ push }) => push(0),
+      ({ push }) => push(1),
+      ({ push }) => push(5)
     ]
     const update: UpdateMap<State, Action, Injects> = {
       push: (state, value) => [
         [...state, value],
-        (_, { push }) => {
+        ({ push }) => {
           if (value === 1) {
             push(2)
             push(3)
@@ -120,7 +120,7 @@ describe('useBacklash', () => {
 
     const init = () => ['idle'] as const
     const update: UpdateMap<State, Action, Injects> = {
-      start: () => ['loading', ({ fetch }, { done }) => fetch().then(done)],
+      start: () => ['loading', ({ done }, { fetch }) => fetch().then(done)],
 
       done: (_, text) => [{ text }]
     }
@@ -154,7 +154,7 @@ describe('useBacklash', () => {
 
     const init = () => [0] as const
     const update: UpdateMap<State, Action, Injects> = {
-      inc: (state) => [state + 1, ({ delay }, { inc }) => delay().then(inc)]
+      inc: (state) => [state + 1, ({ inc }, { delay }) => delay().then(inc)]
     }
 
     const delay = () =>
@@ -207,9 +207,9 @@ describe('useBacklash', () => {
 
     const init = (): Command<State, Action, Injects> => [
       0,
-      (_, { inc }) => inc(),
-      (_, { inc }) => inc(),
-      (_, { inc }) => inc()
+      ({ inc }) => inc(),
+      ({ inc }) => inc(),
+      ({ inc }) => inc()
     ]
 
     const update: UpdateMap<State, Action, Injects> = {
@@ -231,12 +231,12 @@ describe('useBacklash', () => {
     type Action = [tag: 'add', amount: number] | [tag: 'inc']
     type Injects = { amount: number }
 
-    const init = (): Command<State, Action, Injects> => [0, ({ amount }, { add }) => add(amount)]
+    const init = (): Command<State, Action, Injects> => [0, ({ add }, { amount }) => add(amount)]
 
     const update: UpdateMap<State, Action, Injects> = {
       inc: (state) => [
         state,
-        ({ amount }, { add }) => {
+        ({ add }, { amount }) => {
           add(amount)
         }
       ],
@@ -339,8 +339,8 @@ describe('useBacklash', () => {
 
     const init = (count: number): Command<State, Action, Injects> => [
       count,
-      (_, { inc }) => inc(),
-      (_, { inc }) => inc()
+      ({ inc }) => inc(),
+      ({ inc }) => inc()
     ]
 
     const update: UpdateMap<State, Action, Injects> = {
@@ -387,9 +387,9 @@ describe('useBacklash', () => {
 
     const init = (value: string): Command<State, Action, Injects> => [
       [value],
-      (_, { add }) => add('init 1'),
-      (_, { add }) => add('init 2'),
-      (_, { add }) => add('init 3')
+      ({ add }) => add('init 1'),
+      ({ add }) => add('init 2'),
+      ({ add }) => add('init 3')
     ]
 
     const update: UpdateMap<State, Action, Injects> = {
