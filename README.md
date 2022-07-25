@@ -92,7 +92,7 @@ export const Counter = () => {
 }
 ```
 
-For now `useBacklash` was used just a fancy `useReducer` that returns an actions object instead of dispatch function. It doesn't make much sense to use it like this instead of `useReducer`. So let's make that counter persistent and see how `useBacklash` helps to handle side effects.
+For now `useBacklash` was used just as a fancy `useReducer` that returns an actions object instead of dispatch function. It doesn't make much sense to use it like this instead of `useReducer`. So let's make that counter persistent and see how `useBacklash` helps to handle side effects.
 
 ```ts
 import React from 'react'
