@@ -107,7 +107,7 @@ const key = 'counter_key'
 
 // init and each update property functions return
 // the value of Command type - [State, ...Effect[]]
-const init = (): Command<State, Action> => [
+export const init = (): Command<State, Action> => [
   'loading',
   // The next function is a side effect that will be called by useBacklash
   // internally. Here it has single parameter - the same actions object
@@ -117,7 +117,7 @@ const init = (): Command<State, Action> => [
   // and all of them will run in order.
 ]
 
-const update: UpdateMap<State, Action> = {
+export const update: UpdateMap<State, Action> = {
   // The second parameter is a value that was passed to the 'loaded' action
   // a few lines earlier.
   loaded: (_, count) => [count],
@@ -159,4 +159,115 @@ export const Counter = () => {
     </>
   )
 }
+```
+
+Sample test.
+
+```ts
+import { act, renderHook } from '@testing-library/react'
+import { useBacklash } from '../src'
+import { init, update } from '../src/Counter'
+
+describe.only('Counter', () => {
+  test('state should equal 1 after inc', () => {
+    const { result } = renderHook(() => useBacklash(init, update))
+
+    act(() => {
+      result.current[1].inc()
+    })
+
+    expect(result.current[0]).toEqual(1)
+  })
+})
+```
+
+When running this test with `jest` in `jsdom` test environment everything works as expected. But let's imagine that we don't have access to `localStorage` in our test environment. In this case test will fail with error: `ReferenceError: localStorage is not defined`. To avoid these kind of errors, `useBacklash` has an optional third parameter - `injects`. This parameter's value will be passed as a second argument to every effect function.
+
+```diff
+  import React from 'react'
+  import { Command, UpdateMap, useBacklash } from '../'
+
+  type State = 'loading' | number
+  type Action = [tag: 'loaded', count: number] | [tag: 'inc'] | [tag: 'dec']
++ type Injects = {
++   readonly getItem: Storage['getItem']
++   readonly setItem: Storage['setItem']
++ }
+
+  const key = 'counter_key'
+
+- export const init = (): Command<State, Action> => [
++ export const init = (): Command<State, Action, Injects> => [
+    'loading',
+-   ({ loaded }) => loaded(Number(localStorage.getItem(key)) || 0)
++   ({ loaded }, { getItem }) => loaded(Number(getItem(key)) || 0)
+  ]
+
+- export const update: UpdateMap<State, Action> = {
++ export const update: UpdateMap<State, Action, Injects> = {
+    loaded: (_, count) => [count],
+
+    inc: (state) => {
+      if (state === 'loading') {
+        return [state]
+      }
+
+      const next = state + 1
+
+-     return [next, () => localStorage.setItem(key, `${next}`)]
++     return [next, (_, { setItem }) => setItem(key, `${next}`)]
+    },
+
+    dec: (state) => {
+      if (state === 'loading') {
+        return [state]
+      }
+
+      const next = state - 1
+
+-     return [next, () => localStorage.setItem(key, `${next}`)]
++     return [next, (_, { setItem }) => setItem(key, `${next}`)]
+    }
+  }
+
+  export const Counter = () => {
+-   const [state, actions] = useBacklash(init, update)
++   // Updating 'injects' doesn't trigger rerenders, so it is safe to inline it.
++   const [state, actions] = useBacklash(init, update, {
++     getItem: ((...args) => localStorage.getItem(...args)) as Storage['getItem'],
++     setItem: ((...args) => localStorage.setItem(...args)) as Storage['setItem']
++   })
+
+    return state === 'loading' ? null : (
+      <>
+        <div>{state}</div>
+        <button onClick={actions.inc}>inc</button>
+        <button onClick={actions.dec}>dec</button>
+      </>
+    )
+}
+```
+
+Now the test can be rewritten with mocked `localStorage`:
+
+```ts
+test('state should equal 1 after inc', () => {
+  let storage: string | null = null
+
+  const { result } = renderHook(() =>
+    useBacklash(init, update, {
+      getItem: (_: string) => storage,
+      setItem: (_: string, value: string) => {
+        storage = `${value}`
+      }
+    })
+  )
+
+  act(() => {
+    result.current[1].inc()
+  })
+
+  expect(result.current[0]).toEqual(1)
+  expect(storage).toEqual('1')
+})
 ```
