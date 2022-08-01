@@ -114,7 +114,13 @@ function useBacklashImpl<
   const [state, setState] = useState(initialState)
   const mutState = useRef(state)
   const isRunning = useRef(true)
+  const isInit = useRef(false)
   const effects = useRef(initialEffects)
+  const deps = useRef(injects)
+
+  useEffect(() => {
+    deps.current = injects
+  }, [injects])
 
   const [actions] = useState(() =>
     Object.fromEntries(
@@ -124,7 +130,9 @@ function useBacklashImpl<
           if (isRunning.current) {
             const effs = effects.current
 
-            while (effs.length > 0) effs.pop()?.(actions, injects)
+            while (!isInit.current && effs.length > 0) effs.pop()?.(actions, deps.current)
+
+            isInit.current = true
 
             const [nextState, ...nextEffects] = up(mutState.current, ...args)
 
@@ -135,7 +143,7 @@ function useBacklashImpl<
 
             effs.unshift(...nextEffects)
 
-            while (effs.length > 0) effs.shift()?.(actions, injects)
+            while (effs.length > 0) effs.shift()?.(actions, deps.current)
           }
         }
       ])
@@ -147,10 +155,13 @@ function useBacklashImpl<
 
     const effs = effects.current
 
-    while (effs.length > 0) effs.pop()?.(actions, injects)
+    while (effs.length > 0) effs.pop()?.(actions, deps.current)
+
+    isInit.current = true
 
     return () => {
       isRunning.current = false
+      isInit.current = false
       effects.current = []
     }
   }, [])

@@ -32,24 +32,20 @@ import { UpdateMap, useBacklash } from 'use-backlash'
 // State can be anything,
 type State = number
 
-// but an Action is always a union of tuples,
-// where the first element is the name of an action
-// and should be a string.
+// but an Action is always a union of tuples, where the first element
+// is the name of an action and should be a string.
 type Action = [tag: 'inc'] | [tag: 'dec']
 
 // init function has no arguments and just
 // returns initial state wrapped in array.
 const init = () => [0] as const
 
-// Unlike with standard useReducer update/reducer
-// is not a function with a switch statement inside,
-// it is an object where each key is an action name
-// and each value is a reducer that takes a state,
-// rest action elements (if any) and returns next
-// state wrapped in array.
-// There is a helper UpdateMap type, that checks
-// the shape of update object and makes writing
-// types by hand optional.
+// Unlike the standard useReducer, update/reducer is not a function with
+// a switch statement inside, it is an object where each key is an action
+// name and each value is a reducer that takes a state, rest action
+// elements (if any) and returns next state wrapped in array. There is
+// a helper UpdateMap type, that checks the shape of update object and
+// makes writing types by hand optional.
 const update: UpdateMap<State, Action> = {
   inc: (state) => [state + 1],
 
@@ -57,12 +53,12 @@ const update: UpdateMap<State, Action> = {
 }
 
 export const Counter = () => {
-  // In this example useBacklash hook takes init & update
-  // functions and returns a tuple containing state & actions.
-  // Note that every argument of useBacklash is 'initial' and
-  // changing these things won't affect the behavior of the hook.
-  // Also the actions object is guaranteed to remain the same
-  // during rerenders just like useReducer's dispatch function.
+  // In this example useBacklash hook takes init & update functions and
+  // returns a tuple containing state & actions. Note that 'init' & 'update'
+  // arguments of useBacklash is 'initial' and changing these things won't
+  // affect the behavior of the hook. Also the actions object is guaranteed
+  // to remain the same during rerenders just like useReducer's dispatch
+  // function.
   const [state, actions] = useBacklash(init, update)
 
   return (
@@ -98,11 +94,10 @@ For now `useBacklash` was used just as a fancy `useReducer` that returns an acti
 import React from 'react'
 import { Command, UpdateMap, useBacklash } from 'use-backlash'
 
-// We are going to use localStorage to store the state
-// of the Counter. Since I/O is a side effect it can not
-// be called directly from the init function. To model the
-// situation 'state is not set yet' State type will be extended
-// with 'loading' string literal.
+// We are going to use localStorage to store the state of the Counter.
+// Since I/O is a side effect it can not be called directly from the init
+// function. To model the situation 'state is not set yet' State type will
+// be extended with 'loading' string literal.
 type State = 'loading' | number
 
 // Additional action 'loaded' will notify that Counter state is loaded.
@@ -123,7 +118,7 @@ const init = (): Command<State, Action> => [
 ]
 
 const update: UpdateMap<State, Action> = {
-  // The second parameter is value that was passed to the 'loaded' action
+  // The second parameter is a value that was passed to the 'loaded' action
   // a few lines earlier.
   loaded: (_, count) => [count],
 

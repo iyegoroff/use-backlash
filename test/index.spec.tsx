@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useLayoutEffect, useCallback, StrictMode } from 'react'
 import { render, cleanup, waitFor, fireEvent, renderHook, act } from '@testing-library/react'
-import { Command, UpdateMap, useBacklash } from '../src'
+import { ActionMap, Command, UpdateMap, useBacklash } from '../src'
 
 describe('example test', () => {
   afterEach(cleanup)
@@ -111,6 +111,97 @@ describe('useBacklash', () => {
 
     const { getByTestId } = render(<List />)
     expect(getByTestId('result').textContent).toEqual('0,1,2,3,4,5,10,20,21,22,30')
+  })
+
+  test('should preserve effect order when adding single effect', () => {
+    type State = readonly number[]
+    type Action = [tag: 'push', value: number, effects: number[]]
+    type Injects = Record<string, never>
+
+    const init = (): Command<State, Action, Injects> => [[], ({ push }) => push(0, [1, 2])]
+    const update: UpdateMap<State, Action, Injects> = {
+      push: (state, value, [first, ...rest]) => {
+        const nextState = [...state, value]
+        return first === undefined ? [nextState] : [nextState, ({ push }) => push(first, rest)]
+      }
+    }
+
+    const List = () => {
+      const [state, actions] = useBacklash(init, update)
+
+      useLayoutEffect(() => {
+        actions.push(3, [4, 5])
+        actions.push(6, [7, 8])
+      }, [actions])
+
+      useEffect(() => {
+        actions.push(9, [10, 11])
+        actions.push(12, [13, 14])
+      }, [actions])
+
+      return <div data-testid='result'>{state.join()}</div>
+    }
+
+    const { getByTestId } = render(<List />)
+    expect(getByTestId('result').textContent).toEqual('0,1,2,3,4,5,6,7,8,9,10,11,12,13,14')
+  })
+
+  test('should preserve effect order when adding multiple effects', () => {
+    type State = readonly number[]
+    type Action = [tag: 'push', value: number, effects?: number[][]]
+    type Injects = Record<string, never>
+
+    const init = (): Command<State, Action, Injects> => [
+      [],
+      ({ push }) =>
+        push(0, [
+          [1, 2],
+          [3, 4]
+        ])
+    ]
+    const update: UpdateMap<State, Action, Injects> = {
+      push: (state, value, effects) => [
+        [...state, value],
+        ...(effects ?? []).map(([first, ...rest]) => ({ push }: ActionMap<Action>) => {
+          if (first !== undefined) {
+            push(first, [rest])
+          }
+        })
+      ]
+    }
+
+    const List = () => {
+      const [state, actions] = useBacklash(init, update)
+
+      useLayoutEffect(() => {
+        actions.push(5, [
+          [6, 7],
+          [8, 9]
+        ])
+        actions.push(10, [
+          [11, 12],
+          [13, 14]
+        ])
+      }, [actions])
+
+      useEffect(() => {
+        actions.push(15, [
+          [16, 17],
+          [18, 19]
+        ])
+        actions.push(20, [
+          [21, 22],
+          [23, 24]
+        ])
+      }, [actions])
+
+      return <div data-testid='result'>{state.join()}</div>
+    }
+
+    const { getByTestId } = render(<List />)
+    expect(getByTestId('result').textContent).toEqual(
+      '0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24'
+    )
   })
 
   test('should handle async effects', async () => {
@@ -226,57 +317,51 @@ describe('useBacklash', () => {
     expect(getByTestId('result').textContent).toEqual('3')
   })
 
-  test('should ignore dependency changes', async () => {
+  test('should listen inject changes', async () => {
     type State = number
-    type Action = [tag: 'add', amount: number] | [tag: 'inc']
+    type Action = [tag: 'done', amount: number] | [tag: 'start']
     type Injects = { amount: number }
 
-    const init = (): Command<State, Action, Injects> => [0, ({ add }, { amount }) => add(amount)]
+    const init = (): Command<State, Action, Injects> => [0, ({ done }, { amount }) => done(amount)]
 
     const update: UpdateMap<State, Action, Injects> = {
-      inc: (state) => [
-        state,
-        ({ add }, { amount }) => {
-          add(amount)
-        }
-      ],
-      add: (state, amount) => [state + amount]
+      start: (state) => [state, ({ done }, { amount }) => done(amount)],
+
+      done: (_, amount) => [amount]
     }
 
-    const Counter = () => {
+    const Setter = () => {
       const [amount, setAmount] = useState(3)
-      const [state, { inc }] = useBacklash(init, update, { amount })
+      const [state, { start }] = useBacklash(init, update, { amount })
 
       const incAmount = useCallback(() => setAmount((a) => a + 3), [])
 
       return (
         <>
-          <button data-testid='inc' onClick={inc} />
+          <button data-testid='start' onClick={start} />
           <button data-testid='inc-amount' onClick={incAmount} />
           <div data-testid='result'>{state}</div>
         </>
       )
     }
 
-    const { getByTestId } = render(<Counter />)
+    const { getByTestId } = render(<Setter />)
 
-    const inc = getByTestId('inc')
+    const start = getByTestId('start')
     const incAmount = getByTestId('inc-amount')
 
-    fireEvent.click(inc)
-    fireEvent.click(inc)
+    fireEvent.click(start)
     fireEvent.click(incAmount)
 
     await new Promise((resolve) => {
       setTimeout(() => {
-        fireEvent.click(inc)
-        fireEvent.click(inc)
+        fireEvent.click(start)
         resolve(undefined)
       }, 300)
     })
 
     await waitFor(() => {
-      expect(getByTestId('result').textContent).toEqual('15')
+      expect(getByTestId('result').textContent).toEqual('6')
     })
   })
 

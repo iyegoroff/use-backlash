@@ -38,6 +38,10 @@
         "asyncArrow": "always"
       }
     ],
-    "@typescript-eslint/promise-function-async": "off"
+    "@typescript-eslint/promise-function-async": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "ignoreRestSiblings": true, "argsIgnorePattern": "^_" }
+    ]
   }
 }

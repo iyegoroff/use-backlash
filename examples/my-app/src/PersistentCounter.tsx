@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { Command, UpdateMap, useBacklash } from 'use-backlash'
 import { gap } from './gap'
 
@@ -37,7 +37,7 @@ const store = (item: string) => localStorage.setItem(key, item)
 
 const load = () => localStorage.getItem(key) ?? undefined
 
-export const PersistentCounter = () => {
+export const PersistentCounter = memo(() => {
   const [state, actions] = useBacklash(init, update, { store, load })
 
   // eslint-disable-next-line no-null/no-null
@@ -50,4 +50,4 @@ export const PersistentCounter = () => {
       <div>{state}</div>
     </>
   )
-}
+})

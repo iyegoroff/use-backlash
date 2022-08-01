@@ -1,0 +1,4 @@
+{
+  "plugins": ["babel-plugin-spectypes"],
+  "targets": { "node": 16 }
+}

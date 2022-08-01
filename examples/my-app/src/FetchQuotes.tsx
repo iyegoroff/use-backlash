@@ -1,5 +1,5 @@
-import React from 'react'
-import { isRecord } from 'ts-is-record'
+import React, { memo } from 'react'
+import { object, string } from 'spectypes'
 import { Command, UpdateMap, useBacklash } from 'use-backlash'
 import { gap } from './gap'
 
@@ -38,18 +38,23 @@ const update: UpdateMap<State, Action, Injects> = {
   clear: (state) => [state.quotes.length === 0 ? state : { ...state, quotes: [] }]
 }
 
+const checkBody = object({
+  quote: string
+})
+
 const fetchQuote = () =>
   fetch('https://api.kanye.rest')
     .then((response) => response.json())
-    .then((json: unknown) =>
-      isRecord(json) && 'quote' in json && typeof json.quote === 'string'
-        ? json.quote
+    .then(checkBody)
+    .then((body) =>
+      body.tag === 'success'
+        ? body.success.quote
         : (() => {
-            throw new Error('invalid quote format!')
+            throw new Error(JSON.stringify(body.failure))
           })()
     )
 
-export const FetchQuotes = () => {
+export const FetchQuotes = memo(() => {
   const [state, actions] = useBacklash(() => init(true), update, { fetchQuote })
   const { status, quotes } = state
 
@@ -69,4 +74,4 @@ export const FetchQuotes = () => {
       </ul>
     </div>
   )
-}
+})

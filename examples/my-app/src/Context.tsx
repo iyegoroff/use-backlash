@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext } from 'react'
+import React, { createContext, memo, useCallback, useContext } from 'react'
 import { ActionMap, Command, UpdateMap, useBacklash } from 'use-backlash'
 import { gap } from './gap'
 
@@ -29,7 +29,7 @@ const Provider = ({ children }: React.PropsWithChildren) => {
   )
 }
 
-const Input = () => {
+const Input = memo(() => {
   const state = useContext(StateContext)
   const actions = useContext(ActionsContext)
 
@@ -39,13 +39,13 @@ const Input = () => {
   )
 
   return <input value={state} onChange={onChange} />
-}
+})
 
-const Output = () => {
+const Output = memo(() => {
   const state = useContext(StateContext)
 
   return <div>{state}</div>
-}
+})
 
 export const Context = () => (
   <Provider>
