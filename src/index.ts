@@ -180,7 +180,7 @@ function useBacklashImpl<
       isInit.current = false
       effects.current = []
     }
-  }, [])
+  }, [actions])
 
   return [state, actions]
 }

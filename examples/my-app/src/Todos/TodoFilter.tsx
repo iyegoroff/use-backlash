@@ -9,7 +9,7 @@ type TodoFilterProps = Pick<TodosState, 'filter'> & {
 }
 
 export const TodoFilter = memo(function TodoFilter({ filter, actions }: TodoFilterProps) {
-  const setAll = usePipe([actions.filter, 'allc'])
+  const setAll = usePipe([actions.filter, 'all'])
   const setActive = usePipe([actions.filter, 'active'])
   const setDone = usePipe([actions.filter, 'done'])
 
