@@ -1,15 +1,12 @@
 import { Command, UpdateMap } from 'use-backlash'
-import { Injects } from './common'
-import { LoadedCounterState } from './LoadedCounter/state'
 
-export type CounterState = 'loading' | LoadedCounterState
-type Action = [tag: 'loaded', count: number]
+export type CounterState = number
+type Action = [tag: 'inc'] | [tag: 'dec']
 
-export const init = (): Command<CounterState, Action, Injects> => [
-  'loading',
-  ({ loaded }, { load }) => loaded(Number(load()) || 0)
-]
+export const init = (state: number): Command<CounterState, Action> => [state]
 
-export const update: UpdateMap<CounterState, Action, Injects> = {
-  loaded: (_, count) => [count]
+export const update: UpdateMap<CounterState, Action> = {
+  inc: (state) => [state + 1],
+
+  dec: (state) => [state - 1]
 }

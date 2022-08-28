@@ -1,5 +1,6 @@
-import React, { StrictMode } from 'react'
+import React from 'react'
 import { Context } from './Context'
+import { PersistentTodos } from './PersistentTodos'
 import { FetchQuotes } from './FetchQuotes'
 import { PersistentCounter } from './PersistentCounter'
 
@@ -12,7 +13,7 @@ const style = {
 } as const
 
 export const App = () => (
-  <StrictMode>
+  <>
     <div style={style}>
       <h3>Persistent Counter</h3>
       <PersistentCounter />
@@ -22,8 +23,12 @@ export const App = () => (
       <Context />
     </div>
     <div style={style}>
+      <h3>Persistent Todos</h3>
+      <PersistentTodos />
+    </div>
+    <div style={style}>
       <h3>Fetch Quotes</h3>
       <FetchQuotes />
     </div>
-  </StrictMode>
+  </>
 )

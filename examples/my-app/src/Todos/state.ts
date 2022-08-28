@@ -1,36 +1,76 @@
-import { boolean, literal, number, object, record, string, template, union } from 'spectypes'
-import { Command, UpdateMap } from 'use-backlash'
-import { TodosState } from './ReadyTodos/state'
+import { UpdateMap } from 'use-backlash'
 
-type Injects = typeof import('./injects').injects
+type Todo = { done: boolean; text: string }
 
-type State = 'loading' | TodosState
+type Filter = 'done' | 'active' | 'all'
 
-type Action = [tag: 'loaded', state: State]
+type Id = `${number}`
 
-const checkState = object({
-  nextId: number,
-  filter: union(literal('done'), literal('active'), literal('all')),
-  todos: record(
-    template(number),
-    object({
-      done: boolean,
-      text: string
-    })
-  )
-})
+export type TodosState = {
+  nextId: number
+  editedId?: Id
+  filter: Filter
+  todos: ReadonlyMap<Id, Todo>
+}
 
-const defaultState: State = { nextId: 0, filter: 'all', todos: {} }
+export type TodosAction =
+  | [tag: 'add', text: string]
+  | [tag: 'remove', id: Id]
+  | [tag: 'startEdit', id: Id]
+  | [tag: 'confirmEdit', id: Id, text: string]
+  | [tag: 'cancelEdit']
+  | [tag: 'toggle', id: Id]
+  | [tag: 'filter', value: Filter]
+  | [tag: 'updateNextTodoText', text: string]
 
-export const init = (): Command<State, Action, Injects> => [
-  'loading',
-  ({ loaded }, { load }) => {
-    const state = checkState(JSON.parse(load() ?? JSON.stringify(defaultState)))
+export const init = (state: Readonly<TodosState>) => [state] as const
 
-    return loaded(state.tag === 'success' ? state.success : defaultState)
+export const update: UpdateMap<TodosState, TodosAction> = {
+  updateNextTodoText: (state, text) => [{ ...state, nextTodoText: text }],
+
+  add: (state, text) => {
+    const { nextId, todos } = state
+
+    return [
+      text === ''
+        ? state
+        : {
+            ...state,
+            nextId: nextId + 1,
+            todos: new Map(todos).set(`${nextId}`, { text, done: false })
+          }
+    ]
+  },
+
+  startEdit: (state, id) => [{ ...state, editedId: id }],
+
+  cancelEdit: (state) => [{ ...state, editedId: undefined }],
+
+  confirmEdit: (state, id, text) => {
+    const { todos } = state
+    const todo = todos.get(id)
+
+    return todo === undefined
+      ? [{ ...state, editedId: undefined }]
+      : [{ ...state, todos: new Map(todos).set(id, { ...todo, text }), editedId: undefined }]
+  },
+
+  remove: ({ todos, ...rest }, id) => {
+    const nextTodos = new Map(todos)
+
+    nextTodos.delete(id)
+
+    return [{ ...rest, todos: nextTodos }]
+  },
+
+  filter: (state, value) => [{ ...state, filter: value }],
+
+  toggle: (state, id) => {
+    const { todos } = state
+    const todo = todos.get(id)
+
+    return todo === undefined
+      ? [state]
+      : [{ ...state, todos: new Map(todos).set(id, { ...todo, done: !todo.done }) }]
   }
-]
-
-export const update: UpdateMap<State, Action, Injects> = {
-  loaded: (_, state) => [state]
 }

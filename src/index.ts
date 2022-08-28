@@ -6,11 +6,27 @@ type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) exten
   ? I
   : never
 
-type PrettyType<V> = Extract<{ [K in keyof V]: V[K] }, unknown>
+type PrettyType<V> = V extends (...args: never[]) => unknown
+  ? V
+  : Extract<{ [K in keyof V]: V[K] }, unknown>
 
-type DeepReadonly<T> = { readonly [P in keyof T]: DeepReadonly<T[P]> }
+type DeepReadonly<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends Map<infer K, infer V>
+  ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
+  : T extends Set<infer V>
+  ? ReadonlySet<DeepReadonly<V>>
+  : {
+      readonly [P in keyof T]: DeepReadonly<T[P]> extends ReadonlyMap<infer K, infer V>
+        ? ReadonlyMap<K, V>
+        : DeepReadonly<T[P]> extends ReadonlySet<infer V>
+        ? ReadonlySet<V>
+        : DeepReadonly<T[P]>
+    }
 
-type PrettyDeepReadonly<T> = PrettyType<{ readonly [P in keyof T]: PrettyDeepReadonly<T[P]> }>
+type PrettyDeepReadonly<T> = DeepReadonly<T>
+
+// type PrettyDeepReadonly<T> = PrettyType<{ readonly [P in keyof T]: PrettyDeepReadonly<T[P]> }>
 
 type NeverMap = Readonly<Record<string, never>>
 
@@ -182,13 +198,13 @@ export type ActionMap<Action extends readonly [string, ...unknown[]]> = PrettyTy
 export type Effect<
   Action extends readonly [string, ...unknown[]],
   InjectMap extends UnknownMap = NeverMap
-> = (actions: ActionMap<Action>, injects: InjectMap) => void
+> = (actions: ActionMap<Action>, injects: DeepReadonly<InjectMap>) => void
 
 export type Command<
   State,
   Action extends readonly [string, ...unknown[]],
   InjectMap extends UnknownMap = NeverMap
-> = readonly [State, ...(readonly Effect<Action, InjectMap>[])]
+> = readonly [State, ...(readonly Effect<Action, DeepReadonly<InjectMap>>[])]
 
 export type UpdateMap<
   State,

@@ -1,6 +1,8 @@
-import React, { createContext, memo, useCallback, useContext } from 'react'
+import React, { createContext, memo, useContext } from 'react'
 import { ActionMap, Command, UpdateMap, useBacklash } from 'use-backlash'
+import { usePipe } from 'use-pipe-ts'
 import { gap } from './gap'
+import { changeEventValue } from './util'
 
 type State = string
 type Action = [tag: 'update', value: string]
@@ -29,19 +31,15 @@ const Provider = ({ children }: React.PropsWithChildren) => {
   )
 }
 
-const Input = memo(() => {
+const Input = memo(function Input() {
   const state = useContext(StateContext)
   const actions = useContext(ActionsContext)
-
-  const onChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => actions.update(e.target.value),
-    [actions]
-  )
+  const onChange = usePipe(changeEventValue, actions.update)
 
   return <input value={state} onChange={onChange} />
 })
 
-const Output = memo(() => {
+const Output = memo(function Output() {
   const state = useContext(StateContext)
 
   return <div>{state}</div>

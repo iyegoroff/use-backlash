@@ -1,12 +1,26 @@
-import React, { memo } from 'react'
+import React, { memo, useEffect } from 'react'
 import { useBacklash } from 'use-backlash'
-import { injects } from './injects'
-import { ReadyTodos } from './ReadyTodos'
-import { init, update } from './state'
+import { init, TodosState, update } from './state'
+import { TodoFilter } from './TodoFilter'
+import { TodoList } from './TodoList'
 
-export const Todos = memo(() => {
-  const [state] = useBacklash(init, update, injects)
+type TodosProps = {
+  readonly initial: TodosState
+  readonly onStateChange: (state: TodosState) => void
+}
 
-  // eslint-disable-next-line no-null/no-null
-  return state === 'loading' ? null : <ReadyTodos initial={state} />
+export const Todos = memo(function Todos({ initial, onStateChange }: TodosProps) {
+  const [state, actions] = useBacklash(() => init(initial), update)
+  const { todos, editedId, filter } = state
+
+  useEffect(() => {
+    onStateChange(state)
+  }, [state, onStateChange])
+
+  return (
+    <>
+      <TodoFilter filter={filter} actions={actions} />
+      <TodoList todos={todos} editedId={editedId} filter={filter} actions={actions} />
+    </>
+  )
 })

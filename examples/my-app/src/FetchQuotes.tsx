@@ -54,7 +54,7 @@ const fetchQuote = () =>
           })()
     )
 
-export const FetchQuotes = memo(() => {
+export const FetchQuotes = memo(function FetchQuotes() {
   const [state, actions] = useBacklash(() => init(true), update, { fetchQuote })
   const { status, quotes } = state
 

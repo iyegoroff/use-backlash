@@ -1,5 +1,5 @@
 {
-  "name": "fetch-quotes",
+  "name": "my-app",
   "version": "1.0.0",
   "description": "",
   "private": "true",
@@ -15,14 +15,14 @@
   "devDependencies": {
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
-    "babel-plugin-spectypes": "^2.1.5",
+    "babel-plugin-spectypes": "^2.1.7",
     "parcel": "^2.6.2",
     "process": "^0.11.10"
   },
   "dependencies": {
-    "spectypes": "^2.1.5",
-    "ts-is-record": "^3.0.5",
-    "ts-micro-dict": "^10.0.6",
+    "fun-constructors": "^0.0.1",
+    "spectypes": "^2.1.7",
+    "ts-railway": "^6.1.1",
     "use-backlash": "file:../../"
   }
 }
