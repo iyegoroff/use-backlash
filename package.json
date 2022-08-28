@@ -1,6 +1,6 @@
 {
   "name": "use-backlash",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "useReducer with effects, the elmish way",
   "sideEffects": false,
   "types": "./dist/dts/index.d.ts",
