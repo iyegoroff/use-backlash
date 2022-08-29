@@ -75,7 +75,7 @@ export const update: UpdateMap<State, Action, Injects> = {
     (_, { store }) =>
       store(
         JSON.stringify(state, (__, val: unknown) =>
-          val instanceof Map ? [...(val as Map<unknown, unknown>).entries()] : val
+          val instanceof Map ? [...(val as Map<unknown, unknown>)] : val
         )
       )
   ]
