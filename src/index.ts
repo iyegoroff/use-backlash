@@ -16,13 +16,7 @@ type DeepReadonly<T> = T extends (...args: never[]) => unknown
   ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
   : T extends Set<infer V>
   ? ReadonlySet<DeepReadonly<V>>
-  : {
-      readonly [P in keyof T]: DeepReadonly<T[P]> extends ReadonlyMap<infer K, infer V>
-        ? ReadonlyMap<K, V>
-        : DeepReadonly<T[P]> extends ReadonlySet<infer V>
-        ? ReadonlySet<V>
-        : DeepReadonly<T[P]>
-    }
+  : { readonly [P in keyof T]: DeepReadonly<T[P]> }
 
 type PrettyDeepReadonly<T> = DeepReadonly<T>
 
