@@ -32,9 +32,12 @@ import { UpdateMap, useBacklash } from 'use-backlash'
 // State can be anything,
 type State = number
 
-// but an Action is always a union of tuples, where the first element
-// is the name of an action and should be a string.
-type Action = [tag: 'inc'] | [tag: 'dec']
+// but an Action is always a record of tuples, where the key
+// is the name of an action and value is a list of arguments.
+type Action = {
+  inc: []
+  dec: []
+}
 
 // init function has no arguments and just
 // returns initial state wrapped in array.
@@ -101,7 +104,11 @@ import { Command, UpdateMap, useBacklash } from 'use-backlash'
 type State = 'loading' | number
 
 // Additional action 'loaded' will notify that Counter state is loaded.
-type Action = [tag: 'loaded', count: number] | [tag: 'inc'] | [tag: 'dec']
+type Action = {
+  loaded: [count: number]
+  inc: []
+  dec: []
+}
 
 const key = 'counter_key'
 
@@ -188,7 +195,13 @@ When running this test with `jest` in `jsdom` test environment everything works 
   import { Command, UpdateMap, useBacklash } from '../'
 
   type State = 'loading' | number
-  type Action = [tag: 'loaded', count: number] | [tag: 'inc'] | [tag: 'dec']
+
+  type Action = {
+    loaded: [count: number]
+    inc: []
+    dec: []
+  }
+
 + type Injects = {
 +   readonly getItem: Storage['getItem']
 +   readonly setItem: Storage['setItem']

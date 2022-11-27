@@ -1,7 +1,10 @@
 import { Command, UpdateMap } from 'use-backlash'
 
 export type CounterState = number
-type Action = [tag: 'inc'] | [tag: 'dec']
+type Action = {
+  inc: []
+  dec: []
+}
 
 export const init = (state: number): Command<CounterState, Action> => [state]
 

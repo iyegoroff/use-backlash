@@ -2,7 +2,10 @@ import { Command, UpdateMap } from 'use-backlash'
 
 type State = 'loading' | number
 
-type Action = [tag: 'loaded', count: number] | [tag: 'persist', count: number]
+type Action = {
+  loaded: [count: number]
+  persist: [count: number]
+}
 
 type Injects = ReturnType<typeof import('../Persistence').Persistence>
 

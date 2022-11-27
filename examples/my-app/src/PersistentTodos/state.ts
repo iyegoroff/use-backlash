@@ -20,7 +20,10 @@ type LoadedState = Spectype<typeof checkState>
 
 type State = 'loading' | LoadedState
 
-type Action = [tag: 'loaded', state: LoadedState] | [tag: 'persist', state: LoadedState]
+type Action = {
+  loaded: [state: LoadedState]
+  persist: [state: LoadedState]
+}
 
 type Injects = ReturnType<typeof import('../Persistence').Persistence>
 

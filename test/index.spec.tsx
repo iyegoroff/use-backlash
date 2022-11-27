@@ -6,7 +6,7 @@ describe('example test', () => {
   afterEach(cleanup)
 
   type State = number
-  type Action = [tag: 'inc']
+  type Action = { inc: [] }
   type Injects = Record<string, never>
 
   const init = (): Command<State, Action, Injects> => [0]
@@ -34,7 +34,7 @@ describe('useBacklash', () => {
     const states: number[] = []
 
     type State = number
-    type Action = [tag: 'inc']
+    type Action = { inc: [] }
     type Injects = Record<string, never>
 
     const init = () => [0] as const
@@ -71,7 +71,7 @@ describe('useBacklash', () => {
 
   test('should preserve effect order', () => {
     type State = readonly number[]
-    type Action = [tag: 'push', value: number]
+    type Action = { push: [value: number] }
     type Injects = Record<string, never>
 
     const init = (): Command<State, Action, Injects> => [
@@ -115,7 +115,7 @@ describe('useBacklash', () => {
 
   test('should preserve effect order when adding single effect', () => {
     type State = readonly number[]
-    type Action = [tag: 'push', value: number, effects: number[]]
+    type Action = { push: [value: number, effects: number[]] }
     type Injects = Record<string, never>
 
     const init = (): Command<State, Action, Injects> => [[], ({ push }) => push(0, [1, 2])]
@@ -148,7 +148,7 @@ describe('useBacklash', () => {
 
   test('should preserve effect order when adding multiple effects', () => {
     type State = readonly number[]
-    type Action = [tag: 'push', value: number, effects?: number[][]]
+    type Action = { push: [value: number, effects?: number[][]] }
     type Injects = Record<string, never>
 
     const init = (): Command<State, Action, Injects> => [
@@ -206,7 +206,7 @@ describe('useBacklash', () => {
 
   test('should handle async effects', async () => {
     type State = 'idle' | 'loading' | { text: string }
-    type Action = [tag: 'start'] | [tag: 'done', text: string]
+    type Action = { start: []; done: [text: string] }
     type Injects = { fetch: () => Promise<string> }
 
     const init = () => ['idle'] as const
@@ -240,7 +240,7 @@ describe('useBacklash', () => {
 
   test('should cleanup on unmount', async () => {
     type State = number
-    type Action = [tag: 'inc']
+    type Action = { inc: [] }
     type Injects = { delay: () => Promise<unknown> }
 
     const init = () => [0] as const
@@ -293,7 +293,7 @@ describe('useBacklash', () => {
 
   test('should trigger initial effects', () => {
     type State = number
-    type Action = [tag: 'inc']
+    type Action = { inc: [] }
     type Injects = Record<string, never>
 
     const init = (): Command<State, Action, Injects> => [
@@ -319,7 +319,7 @@ describe('useBacklash', () => {
 
   test('should listen inject changes', async () => {
     type State = number
-    type Action = [tag: 'done', amount: number] | [tag: 'start']
+    type Action = { start: []; done: [amount: number] }
     type Injects = { amount: number }
 
     const init = (): Command<State, Action, Injects> => [0, ({ done }, { amount }) => done(amount)]
@@ -369,7 +369,7 @@ describe('useBacklash', () => {
     let effectCount = 0
 
     type State = number
-    type Action = [tag: 'inc']
+    type Action = { inc: [] }
     type Injects = Record<string, never>
 
     const init = () => [0] as const
@@ -419,7 +419,7 @@ describe('useBacklash', () => {
 
   test('should take account of StrictMode', async () => {
     type State = number
-    type Action = [tag: 'inc']
+    type Action = { inc: [] }
     type Injects = Record<string, never>
 
     const init = (count: number): Command<State, Action, Injects> => [
@@ -467,7 +467,7 @@ describe('useBacklash', () => {
 
   test('should run intial effects prior to effects triggered from useLayoutEffect', () => {
     type State = string[]
-    type Action = [tag: 'add', value: string]
+    type Action = { add: [value: string] }
     type Injects = Record<string, never>
 
     const init = (value: string): Command<State, Action, Injects> => [
@@ -512,7 +512,7 @@ describe('useBacklash', () => {
     let renders = 0
 
     type State = number[]
-    type Action = [tag: 'clear']
+    type Action = { clear: [] }
     type Injects = Record<string, never>
 
     const init = () => [[1, 2, 3]] as const
@@ -556,7 +556,7 @@ describe('useBacklash', () => {
     let initCalls = 0
 
     type State = number
-    type Action = [tag: 'inc']
+    type Action = { inc: [] }
     type Injects = Record<string, never>
 
     const init = () => {
@@ -607,7 +607,7 @@ describe('useBacklash', () => {
     let setNewUpdateWasCalled = false
 
     type State = number
-    type Action = [tag: 'inc']
+    type Action = { inc: [] }
     type Injects = Record<string, never>
 
     const init = () => [0] as const

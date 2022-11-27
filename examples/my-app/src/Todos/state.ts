@@ -13,15 +13,16 @@ export type TodosState = {
   todos: ReadonlyMap<Id, Todo>
 }
 
-export type TodosAction =
-  | [tag: 'add', text: string]
-  | [tag: 'remove', id: Id]
-  | [tag: 'startEdit', id: Id]
-  | [tag: 'confirmEdit', id: Id, text: string]
-  | [tag: 'cancelEdit']
-  | [tag: 'toggle', id: Id]
-  | [tag: 'filter', value: Filter]
-  | [tag: 'updateNextTodoText', text: string]
+export type TodosAction = {
+  add: [text: string]
+  remove: [id: Id]
+  startEdit: [id: Id]
+  confirmEdit: [id: Id, text: string]
+  cancelEdit: []
+  toggle: [id: Id]
+  filter: [value: Filter]
+  updateNextTodoText: [text: string]
+}
 
 export const init = (state: Readonly<TodosState>) => [state] as const
 

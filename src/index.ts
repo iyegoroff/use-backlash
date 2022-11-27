@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 
-type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (
-  k: infer I
-) => void
-  ? I
-  : never
-
 type PrettyType<V> = V extends (...args: never[]) => unknown
   ? V
   : Extract<{ [K in keyof V]: V[K] }, unknown>
@@ -25,6 +19,8 @@ type PrettyDeepReadonly<T> = DeepReadonly<T>
 type NeverMap = Readonly<Record<string, never>>
 
 type UnknownMap = Readonly<Record<string, unknown>>
+
+type TupleMap = Readonly<Record<string, readonly unknown[]>>
 
 export function useBacklash<
   Init extends () => readonly [State, ...((actions: ActionMap, injects: InjectMap) => void)[]],
@@ -179,49 +175,39 @@ function useBacklashImpl<
   return [state, actions]
 }
 
-export type ActionMap<Action extends readonly [string, ...unknown[]]> = PrettyType<
-  UnionToIntersection<
-    Action extends readonly [infer ActionTag, ...infer ActionParams]
-      ? ActionTag extends string
-        ? Readonly<Record<ActionTag, (...args: ActionParams) => void>>
-        : never
-      : never
-  >
+export type ActionMap<Action extends TupleMap> = PrettyType<
+  Readonly<{
+    [Key in keyof Action]: (...args: Action[Key]) => void
+  }>
 >
 
-export type Effect<
-  Action extends readonly [string, ...unknown[]],
-  InjectMap extends UnknownMap = NeverMap
-> = (actions: ActionMap<Action>, injects: DeepReadonly<InjectMap>) => void
+export type Effect<Action extends TupleMap, InjectMap extends UnknownMap = NeverMap> = (
+  actions: ActionMap<Action>,
+  injects: DeepReadonly<InjectMap>
+) => void
 
 export type Command<
   State,
-  Action extends readonly [string, ...unknown[]],
+  Action extends TupleMap,
   InjectMap extends UnknownMap = NeverMap
 > = readonly [State, ...(readonly Effect<Action, DeepReadonly<InjectMap>>[])]
 
 export type UpdateMap<
   State,
-  Action extends readonly [string, ...unknown[]],
+  Action extends TupleMap,
   InjectMap extends UnknownMap = NeverMap
 > = UpdateMapImpl<DeepReadonly<State>, Action, InjectMap, Action>
 
 type UpdateMapImpl<
   State,
-  Action extends readonly [string, ...unknown[]],
+  Action extends TupleMap,
   InjectMap extends UnknownMap,
   CombinedAction extends Action
 > = PrettyType<
-  UnionToIntersection<
-    Action extends readonly [infer Tag, ...infer Params]
-      ? Tag extends string
-        ? Readonly<
-            Record<
-              Tag,
-              (state: State, ...args: Params) => Command<State, CombinedAction, InjectMap>
-            >
-          >
-        : never
-      : never
-  >
+  Readonly<{
+    [Key in keyof Action]: (
+      state: State,
+      ...args: Action[Key]
+    ) => Command<State, CombinedAction, InjectMap>
+  }>
 >
