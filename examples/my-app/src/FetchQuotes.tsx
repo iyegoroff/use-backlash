@@ -8,11 +8,12 @@ type State = {
   quotes: string[]
 }
 
-type Action =
-  | [tag: 'requestQuote']
-  | [tag: 'success', quote: string]
-  | [tag: 'failure', error: unknown]
-  | [tag: 'clear']
+type Action = {
+  requestQuote: []
+  success: [quote: string]
+  failure: [error: unknown]
+  clear: []
+}
 
 type Injects = { fetchQuote: () => Promise<string> }
 

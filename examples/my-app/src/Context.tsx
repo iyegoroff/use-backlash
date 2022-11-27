@@ -5,7 +5,9 @@ import { gap } from './gap'
 import { changeEventValue } from './util'
 
 type State = string
-type Action = [tag: 'update', value: string]
+type Action = {
+  update: [value: string]
+}
 type Injects = Record<string, never>
 
 const init = (): Command<State, Action, Injects> => ['']
