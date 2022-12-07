@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useLayoutEffect, useCallback, StrictMode } from 'react'
+import React, { useEffect, useState, useLayoutEffect, useCallback, StrictMode, useRef } from 'react'
 import { render, cleanup, waitFor, fireEvent, renderHook, act } from '@testing-library/react'
-import { ActionMap, Command, UpdateMap, useBacklash } from '../src'
+import { ActionMap, Command, UpdateMap, createBacklash } from '../src'
+
+const useBacklash = createBacklash({ useEffect, useRef, useState })
 
 describe('example test', () => {
   afterEach(cleanup)
