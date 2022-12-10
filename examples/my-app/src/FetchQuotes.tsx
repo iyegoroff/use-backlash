@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import { object, string } from 'spectypes'
-import { Command, UpdateMap, useBacklash } from 'use-backlash'
+import { Command, UpdateMap, useBacklash } from './use-backlash'
 import { gap } from './gap'
 
 type State = {

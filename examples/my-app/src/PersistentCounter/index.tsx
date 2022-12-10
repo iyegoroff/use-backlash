@@ -1,5 +1,5 @@
 import React, { memo } from 'react'
-import { useBacklash } from 'use-backlash'
+import { useBacklash } from '../use-backlash'
 import { Counter } from '../Counter'
 import { Persistence } from '../Persistence'
 import { init, update } from './state'

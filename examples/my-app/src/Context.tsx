@@ -1,5 +1,5 @@
 import React, { createContext, memo, useContext } from 'react'
-import { ActionMap, Command, UpdateMap, useBacklash } from 'use-backlash'
+import { ActionMap, Command, UpdateMap, useBacklash } from './use-backlash'
 import { usePipe } from 'use-pipe-ts'
 import { gap } from './gap'
 import { changeEventValue } from './util'

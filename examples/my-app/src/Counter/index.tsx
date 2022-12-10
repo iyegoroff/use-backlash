@@ -1,5 +1,5 @@
 import React, { memo, useEffect } from 'react'
-import { useBacklash } from 'use-backlash'
+import { useBacklash } from '../use-backlash'
 import { init, update, CounterState } from './state'
 
 type CounterProps = {
