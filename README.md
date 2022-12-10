@@ -19,15 +19,18 @@ npm i use-backlash
 
 ## Description
 
-This hook is a basic approach to split view/logic/effects in React. It was developed as a boilerplate-free substitute of [ts-elmish](https://github.com/iyegoroff/ts-elmish) project. While it doesn't support effect composition or complex effect creators, it is easier to grasp and have enough power to handle all of the UI-logic for a single component. It also works in [StrictMode](https://reactjs.org/docs/strict-mode.html) and is easy to [test](test/index.spec.tsx#L5-L27)
+This hook is a basic approach to split view/logic/effects in React. It was developed as a boilerplate-free substitute of [ts-elmish](https://github.com/iyegoroff/ts-elmish) project. While it doesn't support effect composition or complex effect creators, it is easier to grasp and have enough power to handle all of the UI-logic for a single component. It also works in [StrictMode](https://reactjs.org/docs/strict-mode.html) and is easy to [test](test/index.spec.tsx#L5-L27). It is designed to be framework-agnostic and was tested with [react](/test/react.spec.tsx) and [preact](/test/preact.spec.tsx).
 
 ## Tutorial
 
 This is going to be a Counter.
 
 ```ts
-import React from 'react'
-import { UpdateMap, useBacklash } from 'use-backlash'
+import React, { useRef, useState, useEffect } from 'react'
+import { UpdateMap, createBacklash } from 'use-backlash'
+
+// A framework should provide react-like hooks
+const useBacklash = createBacklash({ useRef, useState, useEffect })
 
 // State can be anything,
 type State = number
@@ -95,7 +98,9 @@ For now `useBacklash` was used just as a fancy `useReducer` that returns an acti
 
 ```ts
 import React from 'react'
-import { Command, UpdateMap, useBacklash } from 'use-backlash'
+import { Command, UpdateMap, createBacklash } from 'use-backlash'
+
+const useBacklash = createBacklash({ useRef, useState, useEffect })
 
 // We are going to use localStorage to store the state of the Counter.
 // Since I/O is a side effect it can not be called directly from the init
