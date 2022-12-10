@@ -22,7 +22,7 @@
     "build": "rm -rf dist && npm run build:ts && echo '{ \"type\": \"commonjs\" }' >> dist/cjs/package.json",
     "lint": "eslint .",
     "test": "jest",
-    "typecheck-test": "tsc test/index.spec.tsx --noEmit --jsx react --esModuleInterop true",
+    "typecheck-test": "tsc test/*.spec.tsx --noEmit --jsx react --esModuleInterop true",
     "coverage": "codecov",
     "type-coverage": "type-coverage --detail --strict --ignore-files **/examples/** --ignore-files **/dist/**"
   },
