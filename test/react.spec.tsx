@@ -17,10 +17,10 @@ describe('example test', () => {
     inc: (state) => [state + 1]
   }
 
-  test('renderHook & act example', async () => {
+  test('renderHook & act example', () => {
     const { result } = renderHook(() => useBacklash(init, update))
 
-    await act(() => {
+    act(() => {
       result.current[1].inc()
     })
 

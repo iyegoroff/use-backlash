@@ -122,8 +122,7 @@ export const createBacklash = ({
       Record<
         string,
         (
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          state: any,
+          state: never,
           ...args: never[]
         ) => readonly [State, ...((actions: ActionMap, injects: InjectMap) => void)[]]
       >

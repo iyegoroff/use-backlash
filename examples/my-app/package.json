@@ -7,21 +7,22 @@
   "scripts": {
     "preinstall": "cd ../.. && npm i",
     "start": "rm -rf dist && rm -rf .parcel-cache && parcel",
-    "build": "parcel build"
+    "build": "parcel build",
+    "typecheck": "tsc -p ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/react": "^18.0.25",
-    "@types/react-dom": "^18.0.9",
-    "babel-plugin-spectypes": "^2.1.7",
-    "parcel": "^2.8.0",
+    "@types/react": "^18.2.8",
+    "@types/react-dom": "^18.2.4",
+    "babel-plugin-spectypes": "^2.1.8",
+    "parcel": "^2.9.1",
     "process": "^0.11.10"
   },
   "dependencies": {
     "fun-constructors": "^0.0.1",
-    "spectypes": "^2.1.7",
+    "spectypes": "^2.1.8",
     "ts-railway": "^6.1.1",
     "use-backlash": "file:../../"
   }

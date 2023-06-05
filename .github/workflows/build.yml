@@ -12,6 +12,8 @@ jobs:
       - run: cd examples/my-app && npm ci --ignore-scripts
       - run: npm run lint
       - run: npm t
+      - run: npm run typecheck-test
+      - run: cd examples/my-app && npm run typecheck
       - uses: codecov/codecov-action@v2
       - run: npm run type-coverage
       - name: persist to workspace
