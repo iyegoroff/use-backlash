@@ -16,14 +16,15 @@
   },
   "type": "module",
   "scripts": {
-    "preversion": "npm run lint -- --fix && npm run build && npm run typecheck-test && npm t && npm run type-coverage",
+    "preversion": "npm run lint -- --fix && npm run build && npm run typecheck-test && npm t && npm run type-coverage && npm run update-readme",
     "postversion": "git add . && git commit -am \"lint & docs [skip build]\" || : && git push && git push --tags",
     "build:ts": "tsc -p configs/tsconfig.cjs.json && tsc -p configs/tsconfig.mjs.json && tsc -p configs/tsconfig.dts.json",
     "build": "rm -rf dist && npm run build:ts && echo '{ \"type\": \"commonjs\" }' >> dist/cjs/package.json",
     "lint": "eslint .",
     "test": "jest",
     "typecheck-test": "tsc test/*.spec.tsx --noEmit --jsx react --esModuleInterop true",
-    "type-coverage": "type-coverage --detail --strict --ignore-files **/examples/** --ignore-files **/dist/**"
+    "type-coverage": "type-coverage --detail --strict --ignore-files **/examples/** --ignore-files **/dist/**",
+    "update-readme": "replace-in-file '/(release/npm/use-backlash/)([^\\)]*)/g' '$1'$npm_new_version README.md --isRegex"
   },
   "keywords": [
     "react",
@@ -75,6 +76,7 @@
     "preact": "^10.15.1",
     "prettier": "^2.8.8",
     "react": "^18.2.0",
+    "replace-in-file": "^7.0.1",
     "type-coverage": "^2.26.0",
     "typescript": "^5.1.3",
     "use-pipe-ts": "^2.0.2"
