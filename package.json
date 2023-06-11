@@ -24,7 +24,7 @@
     "test": "jest",
     "typecheck-test": "tsc test/*.spec.tsx --noEmit --jsx react --esModuleInterop true",
     "type-coverage": "type-coverage --detail --strict --ignore-files **/examples/** --ignore-files **/dist/**",
-    "update-readme": "replace-in-file '/(release/npm/use-backlash/)([^\\)]*)/g' '$1'$npm_new_version README.md --isRegex"
+    "update-readme": "replace-in-file '/(release/npm/use-backlash)([^\\)]*)/g' '$1/'$npm_new_version README.md --isRegex"
   },
   "keywords": [
     "react",
