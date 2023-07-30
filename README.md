@@ -9,7 +9,7 @@
 [![bundlejs](https://deno.bundlejs.com/?q=use-backlash@0.0.29,use-backlash@0.0.29&treeshake=[*],[{+default+}]&badge=)](https://bundlejs.com/?q=use-backlash)
 [![npm](https://img.shields.io/npm/l/use-backlash.svg?t=1495378566926)](https://www.npmjs.com/package/use-backlash)
 
-useReducer with effects, the elmish way
+useReducer with effects
 
 ## Getting started
 
@@ -19,18 +19,18 @@ npm i use-backlash
 
 ## Description
 
-This hook is a basic approach to split view/logic/effects in React. It was developed as a boilerplate-free substitute of [ts-elmish](https://github.com/iyegoroff/ts-elmish) project. While it doesn't support effect composition or complex effect creators, it is easier to grasp and have enough power to handle all of the UI-logic for a single component. It also works in [StrictMode](https://reactjs.org/docs/strict-mode.html) and is easy to [test](test/index.spec.tsx#L5-L27). It is designed to be framework-agnostic and was tested with [react](/test/react.spec.tsx) and [preact](/test/preact.spec.tsx).
+This hook is a basic approach to split view/logic/effects in React. It works in [StrictMode](https://reactjs.org/docs/strict-mode.html) and is easy to [test](test/index.spec.tsx#L5-L27). It is designed to be framework-agnostic and was tested with [react](/test/react.spec.tsx) and [preact](/test/preact.spec.tsx).
 
 ## Tutorial
 
 This is going to be a Counter.
 
 ```ts
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { UpdateMap, createBacklash } from 'use-backlash'
 
 // A framework should provide react-like hooks
-const useBacklash = createBacklash({ useRef, useState, useEffect })
+const useBacklash = createBacklash({ useRef, useState, useEffect, useLayoutEffect })
 
 // State can be anything,
 type State = number
@@ -42,8 +42,8 @@ type Action = {
   dec: []
 }
 
-// init function has no arguments and just
-// returns initial state wrapped in array.
+// init is a pure (in react terms) function that has no arguments
+// and just returns the initial state wrapped in array.
 const init = () => [0] as const
 
 // Unlike the standard useReducer, update/reducer is not a function with
@@ -97,11 +97,6 @@ export const Counter = () => {
 For now `useBacklash` was used just as a fancy `useReducer` that returns an actions object instead of dispatch function. It doesn't make much sense to use it like this instead of `useReducer`. So let's make that counter persistent and see how `useBacklash` helps to handle side effects.
 
 ```ts
-import React from 'react'
-import { Command, UpdateMap, createBacklash } from 'use-backlash'
-
-const useBacklash = createBacklash({ useRef, useState, useEffect })
-
 // We are going to use localStorage to store the state of the Counter.
 // Since I/O is a side effect it can not be called directly from the init
 // function. To model the situation 'state is not set yet' State type will
@@ -289,3 +284,7 @@ test('state should equal 1 after inc', () => {
   expect(storage).toEqual('1')
 })
 ```
+
+# Trivia
+
+It was developed as a boilerplate-free substitute of [ts-elmish](https://github.com/iyegoroff/ts-elmish) project. While it doesn't support effect composition or complex effect creators, it should be easier to grasp and have enough power to handle important parts of the UI-logic for any component.

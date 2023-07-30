@@ -16,7 +16,7 @@
   },
   "type": "module",
   "scripts": {
-    "preversion": "npm run lint -- --fix && npm run build && npm run typecheck-test && npm t && npm run type-coverage && npm run update-deps-badge && npm run update-bundlejs-badge",
+    "preversion": "npm run lint -- --fix && npm run build && npm run typecheck-test && npm t && npm run type-coverage && npm run update-deps-badge && npm run update-size-badge",
     "postversion": "git add . && git commit -am \"lint & docs [skip build]\" || : && git push && git push --tags",
     "build:ts": "tsc -p configs/tsconfig.cjs.json && tsc -p configs/tsconfig.mjs.json && tsc -p configs/tsconfig.dts.json",
     "build": "rm -rf dist && npm run build:ts && echo '{ \"type\": \"commonjs\" }' >> dist/cjs/package.json",
@@ -25,7 +25,7 @@
     "typecheck-test": "tsc test/*.spec.tsx --noEmit --jsx react --esModuleInterop true",
     "type-coverage": "type-coverage --detail --strict --ignore-files **/examples/** --ignore-files **/dist/**",
     "update-deps-badge": "replace-in-file '/(release/npm/use-backlash)([^\\)]*)/g' '$1/'$npm_new_version README.md --isRegex",
-    "update-bundlejs-badge": "replace-in-file '/(use-backlash@)([^,]*)(,use-backlash@)([^\\&]*)/g' '$1'$npm_new_version'$3'$npm_new_version README.md --isRegex"
+    "update-size-badge": "replace-in-file '/(use-backlash@)([^,]*)(,use-backlash@)([^\\&]*)/g' '$1'$npm_new_version'$3'$npm_new_version README.md --isRegex"
   },
   "keywords": [
     "react",

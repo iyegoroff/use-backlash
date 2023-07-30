@@ -2,9 +2,9 @@ import React, { useEffect, useState, useLayoutEffect, useCallback, StrictMode, u
 import { render, cleanup, waitFor, fireEvent, renderHook, act } from '@testing-library/react'
 import { ActionMap, Command, UpdateMap, createBacklash } from '../src'
 
-const useBacklash = createBacklash({ useEffect, useRef, useState })
+const useBacklash = createBacklash({ useEffect, useRef, useLayoutEffect, useState })
 
-describe('example test', () => {
+describe('react example test', () => {
   afterEach(cleanup)
 
   type State = number
@@ -28,7 +28,7 @@ describe('example test', () => {
   })
 })
 
-describe('useBacklash', () => {
+describe('react useBacklash', () => {
   afterEach(cleanup)
 
   test('should rerender less times than the amount of action calls', () => {
@@ -364,6 +364,51 @@ describe('useBacklash', () => {
 
     await waitFor(() => {
       expect(getByTestId('result').textContent).toEqual('6')
+    })
+  })
+
+  test('should update injects prior to everything else', async () => {
+    type State = number
+    type Action = { start: [number] }
+    type Injects = { amount: number }
+
+    const init = (): Command<State, Action, Injects> => [0]
+
+    const update: UpdateMap<State, Action, Injects> = {
+      start: (_state, num) => [
+        num,
+        (_, { amount }) => {
+          if (num !== amount) {
+            throw new Error(`${num} !== ${amount}`)
+          }
+        }
+      ]
+    }
+
+    const Setter = ({ amount }: { amount: number }) => {
+      const [state, { start }] = useBacklash(init, update, { amount })
+
+      useLayoutEffect(() => {
+        start(amount)
+      }, [amount, start])
+
+      return <div data-testid='result'>{state}</div>
+    }
+
+    const App = () => {
+      const [state, setState] = useState(1)
+
+      useEffect(() => {
+        setTimeout(() => setState(2), 100)
+      }, [])
+
+      return <Setter amount={state} />
+    }
+
+    const { getByTestId } = render(<App />)
+
+    await waitFor(() => {
+      expect(getByTestId('result').textContent).toEqual('2')
     })
   })
 
