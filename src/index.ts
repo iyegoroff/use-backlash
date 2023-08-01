@@ -87,7 +87,7 @@ export const createBacklash = ({
 
               const [nextState, ...nextEffects] = up(mutState.current, ...args)
 
-              if (nextState !== mutState.current) {
+              if (!Object.is(nextState, mutState.current)) {
                 mutState.current = nextState
                 setState(nextState)
               }
