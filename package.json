@@ -1,6 +1,6 @@
 {
   "name": "use-backlash",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "description": "useReducer with effects",
   "sideEffects": false,
   "types": "./dist/dts/index.d.ts",
